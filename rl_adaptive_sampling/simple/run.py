@@ -1,50 +1,133 @@
 import arguments
+import os
 import time
+
 import ray
 import vpg
-from importlib import reload
+import npg
+import brs
+# from importlib import reload
+
+RUN_VPG = False
+RUN_NPG = True
+RUN_BRS = True
+
+BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
+VPG_LOG_DIR = "vpg/5_5_18/"
+NPG_LOG_DIR = "npg/5_5_18/"
+BRS_LOG_DIR = "brs/5_5_18/"
 
 ray.init(num_cpus=4)
 
 @ray.remote
-def run_variant(args):
-    reload(vpg)
+def run_vpg_variant(args):
     vpg.optimize(args)
 
+@ray.remote
+def run_npg_variant(args):
+    npg.optimize(args)
 
-log_dir = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18/"
-seeds = list(range(10))
-lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
-errs = [0.5, 0.2, 0.1]
-# kf_flag = [False, True]
+@ray.remote
+def run_brs_variant(args):
+    brs.optimize(args)
 
 gets = []
 
-# no kalman
-for seed in seeds:
-    for lr in lrs:
-        args = arguments.get_args()
-        args.seed = seed
-        args.lr = lr
-        args.kf_error_thresh = 0.0
-        args.log_dir = log_dir
-        args.no_kalman = True
-        pid = run_variant.remote(args)
-        gets.append(pid)
-        # ray.get(run_variant.remote(args))
-
-# with kalman
-for seed in seeds:
-    for lr in lrs:
-        for err in errs:
+if RUN_VPG:
+    log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR)
+    seeds = list(range(10))
+    lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
+    errs = [0.5, 0.2, 0.1]
+    # no kalman
+    for seed in seeds:
+        for lr in lrs:
             args = arguments.get_args()
             args.seed = seed
             args.lr = lr
-            args.kf_error_thresh = err
+            args.kf_error_thresh = 0.0
             args.log_dir = log_dir
-            args.no_kalman = False
-            pid = run_variant.remote(args)
+            args.no_kalman = True
+            pid = run_vpg_variant.remote(args)
             gets.append(pid)
-            # ray.get(run_variant.remote(args))
+    # with kalman
+    for seed in seeds:
+        for lr in lrs:
+            for err in errs:
+                args = arguments.get_args()
+                args.seed = seed
+                args.lr = lr
+                args.kf_error_thresh = err
+                args.log_dir = log_dir
+                args.no_kalman = False
+                pid = run_vpg_variant.remote(args)
+                gets.append(pid)
 
+    ray.get([pid for pid in gets])
+
+
+if RUN_NPG:
+    log_dir = os.path.join(BASE_LOG_DIR, NPG_LOG_DIR)
+    seeds = list(range(10))
+    lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
+    errs = [0.5, 0.2, 0.1]
+    # no kalman
+    for seed in seeds:
+        for lr in lrs:
+            args = arguments.get_args()
+            args.seed = seed
+            args.lr = lr
+            args.kf_error_thresh = 0.0
+            args.log_dir = log_dir
+            args.no_kalman = True
+            pid = run_npg_variant.remote(args)
+            gets.append(pid)
+    # with kalman
+    for seed in seeds:
+        for lr in lrs:
+            for err in errs:
+                args = arguments.get_args()
+                args.seed = seed
+                args.lr = lr
+                args.kf_error_thresh = err
+                args.log_dir = log_dir
+                args.no_kalman = False
+                pid = run_npg_variant.remote(args)
+                gets.append(pid)
+
+if RUN_BRS:
+    log_dir = os.path.join(BASE_LOG_DIR, BRS_LOG_DIR)
+    seeds = list(range(10))
+    lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
+    errs = [0.5, 0.2, 0.1]
+    nus = [0.5, 0.25, 0.1, 0.05]
+    # no kalman
+    for seed in seeds:
+        for lr in lrs:
+            for nu in nus:
+                args = arguments.get_args()
+                args.seed = seed
+                args.lr = lr
+                args.kf_error_thresh = 0.0
+                args.log_dir = log_dir
+                args.nu = nu
+                args.no_kalman = True
+                pid = run_brs_variant.remote(args)
+                gets.append(pid)
+    # with kalman
+    for seed in seeds:
+        for lr in lrs:
+            for err in errs:
+                for nu in nus:
+                    args = arguments.get_args()
+                    args.seed = seed
+                    args.lr = lr
+                    args.kf_error_thresh = err
+                    args.log_dir = log_dir
+                    args.no_kalman = False
+                    args.nu = nu
+                    pid = run_brs_variant.remote(args)
+                    gets.append(pid)
+
+
+# wait for all processes
 ray.get([pid for pid in gets])

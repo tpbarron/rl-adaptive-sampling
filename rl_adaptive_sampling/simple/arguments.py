@@ -5,6 +5,8 @@ parser.add_argument('--lr', type=float, default=0.025,
                     help='learning rate (default: 0.025)')
 parser.add_argument('--kf-error-thresh', type=float, default=0.025,
                     help='kf error update thresh (default: 0.025)')
+parser.add_argument('--nu', type=float, default=0.1,
+                    help='scaling parameter for noise in BRS (default: 0.1)')
 parser.add_argument('--log-dir', type=str, default='/tmp/rl_kalman/',
                     help='dir to save logs (default: /tmp/rl_kalman/)')
 parser.add_argument('--n-iters', type=int, default=100,

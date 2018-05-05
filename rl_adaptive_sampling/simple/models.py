@@ -48,3 +48,16 @@ class GaussianModel(nn.Module):
         sample = dist.sample()
         logp = dist.log_prob(sample)
         return sample, torch.sum(logp)
+
+
+class SingleParameterModel(object):
+    """
+    This class does not use backprop to compute grads, hence no PyTorch
+    """
+
+    def __init__(self, ndim, x0=-5.0):
+        self.ndim = ndim
+        self.x0 = x0
+        self.x = np.empty((ndim, 1))
+        self.x.fill(x0)
+        self.numel = ndim

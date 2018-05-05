@@ -1,15 +1,16 @@
+import sys
 import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
 
-class NaturalPolicyGradient(Optimizer):
+class NaturalSGD(Optimizer):
     """
     """
     def __init__(self,
                  parameters,
                  lr=0.05):
         defaults = dict(lr=lr)
-        super(NaturalPolicyGradient, self).__init__(parameters, defaults)
+        super(NaturalSGD, self).__init__(parameters, defaults)
 
         # just get the total params in the model
         self.numel = 0
@@ -81,10 +82,15 @@ class NaturalPolicyGradient(Optimizer):
         self.F = self.F / float(len(action_log_probs))
         # check if Fisher PSD, if not add eps * eye
         min_eig = torch.min(torch.eig(self.F)[0])
+        trys = 0
         while min_eig < 0:
+            trys += 1
             print ("Fisher eig < 0: ", float(min_eig))
-            self.F = self.F + 0.1 * torch.eye(self.F.shape[0])
+            self.F = self.F + 1e-8 * torch.eye(self.F.shape[0])
             min_eig = torch.min(torch.eig(self.F)[0])
+            if trys > 100:
+                print ("Fisher numerically unstable, ND.")
+                sys.exit()
 
     def pinv_svd(self, M):
         # Compute SVD pinv.
@@ -108,10 +114,12 @@ class NaturalPolicyGradient(Optimizer):
         if np.isnan(alpha):
             print (alpha, euclidean_grad, Finv, torch.mm(torch.mm(torch.transpose(euclidean_grad, 0, 1), Finv), euclidean_grad))
             np.save("Finv.npy", Finv.numpy())
-            # input("")
+            sys.exit()
         if np.any(np.isnan(self.F.numpy())) or np.any(np.isnan(Finv)):
             print (self.F)
             print (Finv)
+            sys.exit()
+
             # input("")
         # now just do sgd, param = - alpha * param
         i = 0
