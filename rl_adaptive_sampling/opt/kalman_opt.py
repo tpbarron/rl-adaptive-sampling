@@ -76,7 +76,7 @@ class KalmanFilter(object):
         # NOTE: this is being computed properly but was being overwhelmed by magnitude of Pt
         if self.use_diagonal_approx:
             # print (self.e, self.Pt, self.Rt)
-            Kt = self.Pt * 1.0/(self.Pt + self.Rt)
+            Kt = self.Pt * 1.0/(self.Pt + self.Rt + 1e-8)
             self.Pt = (self.ones - Kt) * self.Pt
             self.xt = self.xt + Kt * Et
             self.e = (self.ones - Kt) * self.e

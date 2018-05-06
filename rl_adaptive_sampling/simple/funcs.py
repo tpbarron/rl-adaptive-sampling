@@ -29,3 +29,51 @@ class Parabola(Function):
     def grad(self, x):
         assert isinstance(x, np.ndarray)
         return 2.0 * x
+
+class NDQuadratic(Function):
+    """
+    Test case for high-D function when gradients are HIGHLY correlated
+    """
+    def __init__(self, ndim=10, Q=None):
+        super(NDQuadratic, self).__init__(input_dimen=ndim, output_dimen=1)
+        self.ndim = ndim
+        if Q is None:
+            Q = np.eye(self.ndim)
+        self.Q = Q
+
+    def f(self, x):
+        assert x.ndim == self.input_dimen
+        y = np.transpose(x) * self.Q * x
+        return y
+
+    def grad(self, x):
+        j = 2 * self.Q @ x
+        return j
+
+
+from scipy.optimize import rosen, rosen_der
+
+class Rosenbrock(Function):
+
+    def __init__(self):
+        super(Rosenbrock, self).__init__(input_dimen=2, output_dimen=1)
+
+    def f(self, x):
+        y = rosen(x)
+        return y
+
+    def grad(self, x):
+        g = rosen_der(x)
+        return g
+
+if __name__ == '__main__':
+    f = Rosenbrock()
+    y = f.f(np.array([1, 1]))
+    print (y)
+    g = f.grad(np.array([1, 1]))
+    print (g)
+
+    y = f.f(np.array([0, 1]))
+    print (y)
+    g = f.grad(np.array([0, 1]))
+    print (g)

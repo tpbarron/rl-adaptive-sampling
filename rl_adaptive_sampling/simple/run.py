@@ -8,11 +8,11 @@ import npg
 import brs
 # from importlib import reload
 
-RUN_VPG = False
-RUN_NPG = True
-RUN_BRS = True
+RUN_VPG = True
+RUN_NPG = False
+RUN_BRS = False
 
-BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
+BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
 VPG_LOG_DIR = "vpg/5_5_18/"
 NPG_LOG_DIR = "npg/5_5_18/"
 BRS_LOG_DIR = "brs/5_5_18/"
@@ -33,11 +33,12 @@ def run_brs_variant(args):
 
 gets = []
 
+seeds = list(range(2))
+
 if RUN_VPG:
     log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR)
-    seeds = list(range(10))
-    lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
-    errs = [0.5, 0.2, 0.1]
+    lrs = [0.2] #[0.5, 0.3, 0.2, 0.1, 0.05]
+    errs = [0.01, 0.1, 0.05] #[0.5, 0.2, 0.1]
     # no kalman
     for seed in seeds:
         for lr in lrs:
@@ -47,6 +48,7 @@ if RUN_VPG:
             args.kf_error_thresh = 0.0
             args.log_dir = log_dir
             args.no_kalman = True
+            args.noisy_objective = True
             pid = run_vpg_variant.remote(args)
             gets.append(pid)
     # with kalman
@@ -59,6 +61,7 @@ if RUN_VPG:
                 args.kf_error_thresh = err
                 args.log_dir = log_dir
                 args.no_kalman = False
+                args.noisy_objective = True
                 pid = run_vpg_variant.remote(args)
                 gets.append(pid)
 
@@ -67,9 +70,8 @@ if RUN_VPG:
 
 if RUN_NPG:
     log_dir = os.path.join(BASE_LOG_DIR, NPG_LOG_DIR)
-    seeds = list(range(10))
-    lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
-    errs = [0.5, 0.2, 0.1]
+    lrs = [0.1] #[0.5, 0.3, 0.2, 0.1, 0.05]
+    errs = [0.1] #[0.5, 0.2, 0.1]
     # no kalman
     for seed in seeds:
         for lr in lrs:
@@ -96,7 +98,6 @@ if RUN_NPG:
 
 if RUN_BRS:
     log_dir = os.path.join(BASE_LOG_DIR, BRS_LOG_DIR)
-    seeds = list(range(10))
     lrs = [0.5, 0.3, 0.2, 0.1, 0.05]
     errs = [0.5, 0.2, 0.1]
     nus = [0.5, 0.25, 0.1, 0.05]

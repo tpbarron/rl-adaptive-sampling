@@ -10,7 +10,7 @@ import models
 from rl_adaptive_sampling.opt import kalman_opt
 
 def optimize(args):
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"lr"+str(args.lr)+"error"+str(args.kf_error_thresh))
+    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"lr"+str(args.lr)+"error"+str(args.kf_error_thresh)+"noisyobj"+str(args.noisy_objective))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -71,8 +71,8 @@ def optimize(args):
             log_grad_true.append(0)
             log_grad_obs.append(kf.y)
             log_cov_error.append(kf.Pt)
-            log_min_mu_est.append(model.mu.data.numpy())
-            log_min_std_est.append(model.log_std.exp().data.numpy())
+            log_min_mu_est.append(model.mu.data.numpy().copy())
+            log_min_std_est.append(model.log_std.exp().data.numpy().copy())
             log_abs_error_est.append(kf.e)
             log_abs_error_true.append(0)
             log_obs_noise_est.append(kf.Rt)

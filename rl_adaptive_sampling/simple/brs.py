@@ -54,7 +54,7 @@ def optimize(args):
                 fz_minus = fz_minus + np.random.normal()
                 fz_plus = fz_plus + np.random.normal()
 
-            grad_est = (fz_plus - fz_minus) * delta
+            grad_est = (fz_plus - fz_minus) / args.nu
             # print (grad_est.shape)
             ys.append(grad_est)
 
