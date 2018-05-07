@@ -7,6 +7,7 @@ from torch.autograd import Variable
 
 import funcs
 import models
+
 from rl_adaptive_sampling.opt import kalman_opt
 
 def optimize(args):
@@ -26,18 +27,19 @@ def optimize(args):
     log_abs_error_est = []
     log_batch_sizes = []
 
-    f = funcs.Parabola()
-    kf = kalman_opt.KalmanFilter(state_dim=2)
-    model = models.GaussianModel(ndim=1)
+    f = funcs.make_func(args.func)
+    model = models.GaussianModel(ndim=f.input_dimen)
+    kf = kalman_opt.KalmanFilter(state_dim=model.nparam, use_diagonal_approx=args.use_diagonal_approx, use_last_error=args.use_last_error)
     opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.0)
 
     for itr in range(args.n_iters):
-        kf.reset(err_init=1.0)
+        if not args.no_kalman:
+            kf.reset()
         log_prob_obj_loss = 0
 
         log_grad_est.append(kf.xt)
         log_grad_true.append(0)
-        log_grad_obs.append(np.array([[0], [0]]))
+        log_grad_obs.append(np.zeros_like(kf.xt))
         log_cov_error.append(kf.Pt)
         log_min_mu_est.append(model.mu.data.numpy())
         log_min_std_est.append(model.log_std.exp().data.numpy())
@@ -52,24 +54,26 @@ def optimize(args):
                 objv += np.random.normal()
             # if nsample % 1000 == 0:
             #     print ("Sample: ", nsample, samp, objv)
-            log_prob_obj = logprob * Variable(torch.from_numpy(objv))
+            log_prob_obj = logprob * Variable(torch.from_numpy(objv).float())
+            grad = log_grad_obs[0] # default zero'd
             if args.no_kalman:
                 log_prob_obj_loss += log_prob_obj
             else:
                 opt.zero_grad()
                 log_prob_obj.backward()
                 grad = model.flattened_grad().numpy()
-                # print ("Grad: ", grad.shape)
+                # print ("Grad: ", grad, grad.shape)
                 # input("")
                 kf.update(grad)
-                if nsample > 10 and np.linalg.norm(kf.e) / kf.ndim < args.kf_error_thresh:
-                    print ("Reached error: ", kf.e, kf.e.shape)
+                if nsample > 100 and np.linalg.norm(kf.e)**2.0/kf.state_dim < args.kf_error_thresh:
+                    print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
+                    print ("Nsamples: ", nsample)
                     break
 
             # print ("grad est, true grad, observation: ", xt, f.jacobian(minimum), y)
             log_grad_est.append(kf.xt)
             log_grad_true.append(0)
-            log_grad_obs.append(kf.y)
+            log_grad_obs.append(grad)
             log_cov_error.append(kf.Pt)
             log_min_mu_est.append(model.mu.data.numpy().copy())
             log_min_std_est.append(model.log_std.exp().data.numpy().copy())
@@ -82,13 +86,12 @@ def optimize(args):
         if args.no_kalman:
             (log_prob_obj_loss/args.batch_size).backward()
         else:
-            # print (torch.from_numpy(kf.xt).float())
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
         print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
-        if model.log_std.data < np.log(args.min_std):
-            print ("Setting min variance to ", args.min_std)
-            model.log_std.data = torch.FloatTensor([np.log(args.min_std)])
+        # if model.log_std.data < np.log(args.min_std):
+        #     print ("Setting min variance to ", args.min_std)
+        #     model.log_std.data = torch.FloatTensor([np.log(args.min_std)])
 
     np.save(os.path.join(args.log_dir, "log_min_mu_est.npy"), np.array(log_min_mu_est))
     np.save(os.path.join(args.log_dir, "log_min_std_est.npy"), np.array(log_min_std_est))

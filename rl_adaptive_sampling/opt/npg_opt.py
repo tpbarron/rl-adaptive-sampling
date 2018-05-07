@@ -85,11 +85,11 @@ class NaturalSGD(Optimizer):
         trys = 0
         while min_eig < 0:
             trys += 1
-            print ("Fisher eig < 0: ", float(min_eig))
-            self.F = self.F + 0.1 * torch.eye(self.F.shape[0])
+            # print ("Fisher eig < 0: ", float(min_eig), file=sys.stderr)
+            self.F = self.F + 1e-8 * torch.eye(self.F.shape[0])
             min_eig = torch.min(torch.eig(self.F)[0])
             if trys > 100:
-                print ("Fisher numerically unstable, ND.")
+                print ("Fisher numerically unstable, matrix is neg def.", file=sys.stderr)
                 sys.exit()
 
     def pinv_svd(self, M):
@@ -113,11 +113,10 @@ class NaturalSGD(Optimizer):
 
         if np.isnan(alpha):
             print (alpha, euclidean_grad, Finv, torch.mm(torch.mm(torch.transpose(euclidean_grad, 0, 1), Finv), euclidean_grad))
-            np.save("Finv.npy", Finv.numpy())
+            # np.save("Finv.npy", Finv.numpy())
             sys.exit()
         if np.any(np.isnan(self.F.numpy())) or np.any(np.isnan(Finv)):
-            print (self.F)
-            print (Finv)
+            print (self.F, Finv)
             sys.exit()
 
             # input("")

@@ -13,9 +13,9 @@ RUN_NPG = False
 RUN_BRS = False
 
 BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
-VPG_LOG_DIR = "vpg/5_5_18/"
-NPG_LOG_DIR = "npg/5_5_18/"
-BRS_LOG_DIR = "brs/5_5_18/"
+VPG_LOG_DIR = "vpg/5_6_18/"
+# NPG_LOG_DIR = "npg/5_5_18/"
+# BRS_LOG_DIR = "brs/5_5_18/"
 
 ray.init(num_cpus=4)
 
@@ -37,34 +37,41 @@ seeds = list(range(2))
 
 if RUN_VPG:
     log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR)
-    lrs = [0.2] #[0.5, 0.3, 0.2, 0.1, 0.05]
-    errs = [0.01, 0.1, 0.05] #[0.5, 0.2, 0.1]
+    lrs = [0.2, 0.1, 0.05]
+    errs = [0.1, 0.05, 0.01]
+    noisy_obj = [False, True]
+    funcs = ['parabola', 'ndquad', 'quartic']
+    diagonal = [False, True]
+
     # no kalman
     for seed in seeds:
         for lr in lrs:
-            args = arguments.get_args()
-            args.seed = seed
-            args.lr = lr
-            args.kf_error_thresh = 0.0
-            args.log_dir = log_dir
-            args.no_kalman = True
-            args.noisy_objective = True
-            pid = run_vpg_variant.remote(args)
-            gets.append(pid)
+            for nobj in noisy_obj:
+                args = arguments.get_args()
+                args.seed = seed
+                args.lr = lr
+                args.kf_error_thresh = 0.0
+                args.log_dir = log_dir
+                args.no_kalman = True
+                args.noisy_objective = nobj
+                pid = run_vpg_variant.remote(args)
+                gets.append(pid)
     # with kalman
     for seed in seeds:
         for lr in lrs:
             for err in errs:
-                args = arguments.get_args()
-                args.seed = seed
-                args.lr = lr
-                args.kf_error_thresh = err
-                args.log_dir = log_dir
-                args.no_kalman = False
-                args.noisy_objective = True
-                pid = run_vpg_variant.remote(args)
-                gets.append(pid)
-
+                for nobj in noisy_obj:
+                    for diag in diagonal:
+                        args = arguments.get_args()
+                        args.seed = seed
+                        args.lr = lr
+                        args.kf_error_thresh = err
+                        args.log_dir = log_dir
+                        args.no_kalman = False
+                        args.use_diagonal_approx = diag
+                        args.noisy_objective = nobj
+                        pid = run_vpg_variant.remote(args)
+                        gets.append(pid)
     ray.get([pid for pid in gets])
 
 

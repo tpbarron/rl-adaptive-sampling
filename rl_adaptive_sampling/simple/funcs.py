@@ -22,7 +22,7 @@ class Parabola(Function):
         super(Parabola, self).__init__(input_dimen=1, output_dimen=1)
 
     def f(self, x):
-        assert x.ndim == self.input_dimen
+        assert x.size == self.input_dimen
         y = x**2.0
         return y
 
@@ -42,13 +42,28 @@ class NDQuadratic(Function):
         self.Q = Q
 
     def f(self, x):
-        assert x.ndim == self.input_dimen
-        y = np.transpose(x) * self.Q * x
+        assert x.size == self.input_dimen
+        if x.ndim == 1:
+            x = x[:,np.newaxis]
+        y = np.transpose(x) @ self.Q @ x
         return y
 
     def grad(self, x):
         j = 2 * self.Q @ x
         return j
+
+
+class Quartic(Function):
+    def __init__(self):
+        super(Quartic, self).__init__(input_dimen=1, output_dimen=1)
+
+    def f(self, x):
+        assert x.ndim == self.input_dimen
+        y = 2 * x**4.0 + 2 * x**3
+        return y
+
+    def grad(self, x):
+        raise NotImplementedError
 
 
 from scipy.optimize import rosen, rosen_der
@@ -59,12 +74,25 @@ class Rosenbrock(Function):
         super(Rosenbrock, self).__init__(input_dimen=2, output_dimen=1)
 
     def f(self, x):
+        if not isinstance(x, np.ndarray):
+            x = np.array([x])
         y = rosen(x)
-        return y
+        return np.array([y])
 
     def grad(self, x):
         g = rosen_der(x)
         return g
+
+
+def make_func(fname):
+    if fname == 'parabola':
+        return Parabola()
+    if fname == 'ndquad':
+        return NDQuadratic()
+    if fname == 'rosen':
+        return Rosenbrock()
+    if fname =='quartic':
+        return Quartic()
 
 if __name__ == '__main__':
     f = Rosenbrock()

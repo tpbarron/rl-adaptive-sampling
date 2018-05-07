@@ -5,14 +5,14 @@ from torch.distributions import normal
 
 class GaussianModel(nn.Module):
 
-    def __init__(self, ndim, mu0=-5.0, log_std0=0.0):
+    def __init__(self, ndim, mu0=1.0, log_std0=0.0):
         super(GaussianModel, self).__init__()
         self.ndim = ndim
         self.mu0 = mu0
         self.log_std0 = log_std0
         self.mu = nn.Parameter(torch.FloatTensor(ndim).fill_(mu0))
         self.log_std = nn.Parameter(torch.FloatTensor(ndim).fill_(log_std0))
-        self.numel = 2 * ndim
+        self.nparam = 2 * ndim
 
     def unflatten_grad(self, grad):
         # take gradient and reshape back into param matrices
@@ -30,7 +30,7 @@ class GaussianModel(nn.Module):
         """
         Take the gradients in the .grad attribute of each param and flatten it into a vector
         """
-        g = torch.FloatTensor(self.numel)
+        g = torch.FloatTensor(self.nparam)
         ind = 0
         for p in self.parameters():
             gnumel = p.grad.data.numel()
@@ -60,4 +60,5 @@ class SingleParameterModel(object):
         self.x0 = x0
         self.x = np.empty((ndim, 1))
         self.x.fill(x0)
-        self.numel = ndim
+        print (self.x.shape)
+        self.nparam = ndim

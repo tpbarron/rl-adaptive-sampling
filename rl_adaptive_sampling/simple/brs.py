@@ -25,12 +25,13 @@ def optimize(args):
     log_abs_error_est = []
     log_batch_sizes = []
 
-    f = funcs.Parabola()
-    kf = kalman_opt.KalmanFilter(state_dim=1)
-    model = models.SingleParameterModel(ndim=1)
+    f = funcs.make_func(args.func)
+    model = models.SingleParameterModel(ndim=f.input_dimen)
+    kf = kalman_opt.KalmanFilter(state_dim=model.nparam)
 
     for itr in range(args.n_iters):
-        kf.reset(err_init=1.0)
+        if not args.no_kalman:
+            kf.reset()
 
         log_grad_est.append(kf.xt)
         log_grad_true.append(0)
@@ -44,15 +45,15 @@ def optimize(args):
         ys = []
         for nsample in range(args.batch_size):
             # generate random delta
-            delta = np.random.normal()
+            delta = np.random.normal(size=model.x.shape)
             z_minus = model.x - args.nu * delta
             z_plus = model.x + args.nu * delta
 
-            fz_minus = f.f(z_minus[0])
-            fz_plus = f.f(z_plus[0])
+            fz_minus = f.f(z_minus)
+            fz_plus = f.f(z_plus)
             if args.noisy_objective:
-                fz_minus = fz_minus + np.random.normal()
-                fz_plus = fz_plus + np.random.normal()
+                fz_minus = fz_minus + np.random.normal(size=model.x.shape)
+                fz_plus = fz_plus + np.random.normal(size=model.x.shape)
 
             grad_est = (fz_plus - fz_minus) / args.nu
             # print (grad_est.shape)
@@ -61,8 +62,8 @@ def optimize(args):
             if not args.no_kalman:
                 # already know grad just modulate by objective
                 kf.update(grad_est)
-                if np.linalg.norm(kf.e) / kf.ndim < args.kf_error_thresh:
-                    print ("Reached error: ", np.linalg.norm(kf.e)) #, kf.e.shape)
+                if np.linalg.norm(kf.e)**2.0 / kf.state_dim < args.kf_error_thresh:
+                    print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
                     print ("Nsamples: ", nsample)
                     break
 
