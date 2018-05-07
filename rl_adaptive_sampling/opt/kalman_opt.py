@@ -6,9 +6,9 @@ class KalmanFilter(object):
     def __init__(self,
                  state_dim,
                  use_last_error=False,
-                 min_error_init=0.1,
+                 min_error_init=0.01,
                  use_diagonal_approx=True,
-                 sos_init=0.0,
+                 sos_init=10.0,
                  error_init=1.0,
                  reset_observation_noise=False):
         self.state_dim = state_dim
@@ -36,10 +36,10 @@ class KalmanFilter(object):
     def reset(self):
         # set expected error
         if self.use_last_error and self.xt is not None:
-            self.e = (self.xt - self.xt_old)
+            self.e = (self.xt - self.xt_old) * 100.0
             # if less than threshold, set to minimum preserving sign
-            print ("ERROR: ", self.e[np.abs(self.e) < self.min_error_init])
-            self.e[np.abs(self.e) < self.min_error_init] = np.sign(self.e[np.abs(self.e) < self.min_error_init]) * self.min_error_init
+            # print ("ERROR: ", self.e[np.abs(self.e) < self.min_error_init])
+            # self.e[np.abs(self.e) < self.min_error_init] = np.sign(self.e[np.abs(self.e) < self.min_error_init]) * self.min_error_init
         else:
             # either xt is None or use_last_error = False
             if self.e is None:
@@ -140,7 +140,7 @@ class KalmanFilter(object):
             # start = time.time()
             # print (self.Pt)
             # print (self.Rt)
-            Kt = self.Pt @ linalg.inv(self.Pt + self.Rt)
+            Kt = self.Pt @ linalg.inv(self.Pt + self.Rt + 1e-8)
             self.Pt = (self.I - Kt) @ self.Pt
             self.xt = self.xt + Kt @ Et
             self.e = (self.I - Kt) @ self.e

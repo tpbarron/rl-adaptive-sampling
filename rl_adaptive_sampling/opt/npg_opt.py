@@ -86,7 +86,7 @@ class NaturalSGD(Optimizer):
         while min_eig < 0:
             trys += 1
             # print ("Fisher eig < 0: ", float(min_eig), file=sys.stderr)
-            self.F = self.F + 1e-8 * torch.eye(self.F.shape[0])
+            self.F = self.F + 1e-3 * torch.eye(self.F.shape[0])
             min_eig = torch.min(torch.eig(self.F)[0])
             if trys > 100:
                 print ("Fisher numerically unstable, matrix is neg def.", file=sys.stderr)

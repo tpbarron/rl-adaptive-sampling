@@ -10,7 +10,7 @@ import models
 from rl_adaptive_sampling.opt import kalman_opt, npg_opt
 
 def optimize(args):
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"lr"+str(args.lr)+"error"+str(args.kf_error_thresh))
+    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx)))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -93,9 +93,10 @@ def optimize(args):
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
         print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
-        # if model.log_std.data < np.log(args.min_std):
-        #     print ("Setting min variance to ", args.min_std)
-        #     model.log_std.data = torch.FloatTensor([np.log(args.min_std)])
+        if np.any(model.log_std.data.numpy() < np.log(args.min_std)):
+            print ("Setting min variance to ", args.min_std)
+            for p in range(model.nparam//2):
+                model.log_std.data[p] = np.log(args.min_std)
 
     np.save(os.path.join(args.log_dir, "log_min_mu_est.npy"), np.array(log_min_mu_est))
     np.save(os.path.join(args.log_dir, "log_min_std_est.npy"), np.array(log_min_std_est))

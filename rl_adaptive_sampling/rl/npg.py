@@ -270,7 +270,7 @@ def train(model, opt, opt_v, kf, ep=0):
         kf.reset()
 
     step = 0
-    while (not args.no_kalman and np.linalg.norm(kf.e)**2.0/kf.state_dim > args.kf_error_thresh or step < 999) and step < args.batch_size:
+    while (not args.no_kalman and np.linalg.norm(kf.e)**2.0/kf.state_dim > args.kf_error_thresh or step < 100) and step < args.batch_size:
     # while np.linalg.norm(kf.e)**2.0/nparams > args.kf_error_thresh and step < args.batch_size:
         # obs = zfilter(obs)
         # print ("obs: ", obs)
@@ -290,10 +290,10 @@ def train(model, opt, opt_v, kf, ep=0):
         masks.append(1 if not done else 0)
 
         if not args.no_kalman:
-            print (action_log_prob)
+            # print (action_log_prob)
             grad_log_pi[step,:] = compute_grad_log_pi(opt, model.pi, action_log_prob)[:,0]
-            print (grad_log_pi[step,:])
-            input("")
+            # print (grad_log_pi[step,:])
+            # input("")
             # opt.update_fisher(action_log_prob)
 
             if step > 0:
@@ -465,6 +465,7 @@ def main():
         log_writer.writerow([total_samples, max_reward, avg_reward, avg_eval])
         log_file.flush()
         e += 1
+        print ("total samples: ", total_samples)
 
         if avg_eval > best_eval or last_save_step - total_samples > 10000:
             best_eval = avg_eval
