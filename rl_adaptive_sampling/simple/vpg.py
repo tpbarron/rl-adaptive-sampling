@@ -11,7 +11,7 @@ import models
 from rl_adaptive_sampling.opt import kalman_opt
 
 def optimize(args):
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx)))
+    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -29,7 +29,7 @@ def optimize(args):
 
     f = funcs.make_func(args.func)
     model = models.GaussianModel(ndim=f.input_dimen)
-    kf = kalman_opt.KalmanFilter(state_dim=model.nparam, use_diagonal_approx=args.use_diagonal_approx, use_last_error=args.use_last_error)
+    kf = kalman_opt.KalmanFilter(state_dim=model.nparam, use_diagonal_approx=args.use_diagonal_approx, use_last_error=args.use_last_error, sos_init=args.sos_init)
     opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.0)
 
     for itr in range(args.n_iters):
@@ -62,12 +62,13 @@ def optimize(args):
                 opt.zero_grad()
                 log_prob_obj.backward()
                 grad = model.flattened_grad().numpy()
-                # print ("Grad: ", grad, grad.shape)
+                #print ("Grad: ", grad, grad.shape)
                 # input("")
                 kf.update(grad)
+                #print (nsample, np.mean(kf.e), np.mean(kf.Rt)) #, kf.e)
                 if nsample >= 10 and np.mean(kf.e) < args.kf_error_thresh:
-                    print ("Reached error: ", np.mean(kf.e))
-                    print ("Nsamples: ", nsample)
+                    #print ("Reached error: ", np.mean(kf.e))
+                    #print ("Nsamples: ", nsample)
                     break
                 # if nsample >= 100 and np.linalg.norm(kf.e)**2.0/kf.state_dim < args.kf_error_thresh:
                 #     print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
@@ -92,9 +93,9 @@ def optimize(args):
         else:
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
-        print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
+        #print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
         if np.any(model.log_std.data.numpy() < np.log(args.min_std)):
-            print ("Setting min variance to ", args.min_std)
+            #print ("Setting min variance to ", args.min_std)
             for p in range(model.nparam//2):
                 model.log_std.data[p] = np.log(args.min_std)
 

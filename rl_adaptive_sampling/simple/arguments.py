@@ -7,6 +7,8 @@ parser.add_argument('--kf-error-thresh', type=float, default=0.025,
                     help='kf error update thresh (default: 0.025)')
 parser.add_argument('--nu', type=float, default=0.1,
                     help='scaling parameter for noise in BRS (default: 0.1)')
+parser.add_argument('--sos-init', type=float, default=0.0,
+                    help='sos prior for kalman noise approx (default: 0.0)')
 parser.add_argument('--func', type=str, default='parabola',
                     help='parabola, ndquad, quartic, rosen (default: parabola)')
 parser.add_argument('--log-dir', type=str, default='/tmp/rl_kalman/',

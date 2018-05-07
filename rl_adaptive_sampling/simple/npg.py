@@ -66,8 +66,8 @@ def optimize(args):
                 # already know grad just modulate by objective
                 grad = model.flattened_grad().numpy() * objv
                 kf.update(grad)
-                if nsample >= 100 and np.linalg.norm(kf.e)**2.0/ kf.state_dim < args.kf_error_thresh:
-                    print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
+                if nsample >= 100 and np.mean(kf.e) < args.kf_error_thresh:
+                    print ("Reached error: ", np.mean(kf.e)) #, kf.e.shape)
                     print ("Nsamples: ", nsample)
                     # input("")
                     break

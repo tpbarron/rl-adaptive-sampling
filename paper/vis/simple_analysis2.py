@@ -68,30 +68,15 @@ fig = plt.figure(figsize=(4, 3))
 #
 
 
-path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
+#path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
+path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r4_all/'
+path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/temp/'
 
-# batch_sizes1 = np.load(path+'batch1000_lr0.05_error0.0_noisyobj0_fquartic_diag0/0/log_batch_sizes.npy')
-# mu_est1 = np.load(path+'batch1000_lr0.05_error0.0_noisyobj0_fquartic_diag0/0/log_min_mu_est.npy')
-# batch_ends1 = np.cumsum(batch_sizes1)
-# x = batch_ends1
-# y = mu_est1[batch_ends1]**2.0
-# print (y.shape)
-# y = np.mean(y, axis=1)
-# print (y.shape)
-# plt.plot(x, y, label='VPG')
-#
-#
-# batch_sizes1 = np.load(path+'batch1000_lr0.05_error0.1_noisyobj0_fquartic_diag1/2/log_batch_sizes.npy')
-# mu_est1 = np.load(path+'batch1000_lr0.05_error0.1_noisyobj0_fquartic_diag1/2/log_min_mu_est.npy')
-# batch_ends1 = np.cumsum(batch_sizes1)
-# x = batch_ends1
-# y = mu_est1[batch_ends1]**2.0
-# y = np.mean(y, axis=1)
-# plt.plot(x, y, label='VPG-KF 0.1')
-
-func = 'parabola'
+#func = 'parabola'
+func = 'ndquad'
 use_diagonal_approx = 1
-seeds = list(range(3))
+seeds = list(range(2))
+lr = 0.1
 
 # no kalman
 bs = [1000, 500, 250, 100]
@@ -101,9 +86,10 @@ for b, c in zip(bs, colors):
     xs = []
     ys = []
     for s in seeds:
-        batch_sizes1 = np.load(path+'batch'+str(b)+'_lr0.1_error0.0_noisyobj0_f'+func+'_diag0/'+str(s)+'/log_batch_sizes.npy')
-        mu_est1 = np.load(path+'batch'+str(b)+'_lr0.1_error0.0_noisyobj0_f'+func+'_diag0/'+str(s)+'/log_min_mu_est.npy')
+        batch_sizes1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj0_f'+func+'_diag0_sos0.0/'+str(s)+'/log_batch_sizes.npy')
+        mu_est1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj0_f'+func+'_diag0_sos0.0/'+str(s)+'/log_min_mu_est.npy')
         batch_ends1 = np.cumsum(batch_sizes1)
+        print (batch_ends1)
         x = batch_ends1
         y = mu_est1[batch_ends1]**2.0
         y = np.mean(y, axis=1)
@@ -114,18 +100,21 @@ for b, c in zip(bs, colors):
     x = np.mean(xs, axis=0)
     y = np.mean(ys, axis=0)
     std = np.std(ys, axis=0)
-    print (x.shape, std.shape)
-    # input("")
     plt.plot(x, y, label='VPG '+str(b), color=c)
-    plt.errorbar(x, y, yerr=std)
+    plt.errorbar(x, y, yerr=std, color=c)
 
 # kalman
 errs = [0.2, 0.1, 0.05, 0.01]
+lrs = [0.1]
+errs = [0.2, 0.1]
 colors = ['#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
+sos_init = 0.0
+
 for e, c in zip(errs, colors):
-    batch_sizes1 = np.load(path+'batch1000_lr0.1_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'/0/log_batch_sizes.npy')
-    mu_est1 = np.load(path+'batch1000_lr0.1_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'/0/log_min_mu_est.npy')
+    batch_sizes1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/0/log_batch_sizes.npy')
+    mu_est1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/0/log_min_mu_est.npy')
     batch_ends1 = np.cumsum(batch_sizes1)
+    print (batch_ends1)
     x = batch_ends1
     y = mu_est1[batch_ends1]**2.0
     y = np.mean(y, axis=1)
@@ -134,11 +123,14 @@ for e, c in zip(errs, colors):
 plt.xlabel("Samples")
 plt.ylabel("Squared Error")
 
-plt.xlim((0, 5000))
-plt.ylim((0, 0.75))
+if func == 'parabola':
+    plt.xlim((0, 5000))
+elif func == 'ndquad':
+    plt.xlim((0, 10000))
+plt.ylim((0, 1.0))
 
 plt.legend()
 plt.tight_layout()
 
-# plt.show()
-plt.savefig(fname='vpg_parabola.pdf', format='pdf')
+#plt.show()
+plt.savefig(fname='vpg_'+func+'.pdf', format='pdf')

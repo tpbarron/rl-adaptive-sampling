@@ -24,6 +24,7 @@ class KalmanFilter(object):
 
         self.Pt = None
         self.Rt = None
+        self.mean = None
         self.xt = None
         self.xt_old = None
         self.e = None
@@ -56,7 +57,8 @@ class KalmanFilter(object):
             expected_error = np.dot(self.e, np.transpose(self.e)) + np.eye(self.state_dim) * 1e-8 if self.use_last_error and self.Pt is not None else np.eye(self.state_dim) * self.error_init
 
         self.Pt = expected_error
-        self.mean = np.zeros((self.state_dim, 1))
+        if self.reset_observation_noise or self.mean is None:
+            self.mean = np.zeros((self.state_dim, 1))
         self.sos = np.zeros((self.state_dim, 1))
         # initializing this high, gives conservative init
         self.sos.fill(self.sos_init)
@@ -94,10 +96,14 @@ class KalmanFilter(object):
 
         if self.use_diagonal_approx:
             mean_past = self.mean
+            #print ("mean past: ", mean_past.shape)
             self.mean = self.mean + (y - self.mean) / self.n
             self.sos = self.sos + (y - mean_past) * (y - self.mean)
-            var = self.sos / self.n
+            #print ("m, sos: ", self.mean.shape, self.sos.shape)
             if self.n > 1:
+                var = self.sos / (self.n-1)
+                #print ("var: ", var.shape)
+                #input("")
                 self.Rt = var # leave as vector, makes for easier inversion of diag matrix
         else:
             # import time

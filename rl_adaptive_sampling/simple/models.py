@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.distributions import normal
+from torch.distributions import normal, multivariate_normal
 
 class GaussianModel(nn.Module):
 
@@ -33,6 +33,7 @@ class GaussianModel(nn.Module):
         g = torch.FloatTensor(self.nparam)
         ind = 0
         for p in self.parameters():
+            print (p)
             gnumel = p.grad.data.numel()
             g[ind:ind+gnumel] = p.grad.data.view(-1).detach()
             ind += gnumel
@@ -44,11 +45,19 @@ class GaussianModel(nn.Module):
         """
         This gives x, log p(x)
         """
+        #dist1 = multivariate_normal.MultivariateNormal(self.mu, torch.diag(self.log_std.exp()))
         dist = normal.Normal(self.mu, self.log_std.exp())
         sample = dist.sample()
+        #sample2 = dist2.sample()
+        #temp_sample = torch.FloatTensor(sample.shape)
+        #temp_sample.fill_(sample[0])
+        #logp = dist.log_prob(temp_sample)
+        #print ("sample:",sample1, sample2)
         logp = dist.log_prob(sample)
-        return sample, torch.sum(logp)
-
+        #logp2 = dist2.log_prob(sample2)
+        #print ("logp: ", logp1, logp2, torch.mean(logp2), torch.sum(logp2))
+        #input("")
+        return sample, torch.mean(logp)
 
 class SingleParameterModel(object):
     """
