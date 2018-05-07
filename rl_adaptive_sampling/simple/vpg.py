@@ -65,8 +65,8 @@ def optimize(args):
                 # print ("Grad: ", grad, grad.shape)
                 # input("")
                 kf.update(grad)
-                if nsample >= 10 and np.linalg.norm(kf.e)**2.0/kf.state_dim < args.kf_error_thresh:
-                    print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
+                if nsample >= 10 and np.mean(kf.e) < args.kf_error_thresh:
+                    print ("Reached error: ", np.mean(kf.e))
                     print ("Nsamples: ", nsample)
                     break
                 # if nsample >= 100 and np.linalg.norm(kf.e)**2.0/kf.state_dim < args.kf_error_thresh:

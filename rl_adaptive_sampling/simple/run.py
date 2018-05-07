@@ -37,30 +37,30 @@ seeds = list(range(3))
 if RUN_VPG:
     log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR)
     lrs = [0.1, 0.05]
-    errs = [0.2, 0.1, 0.05, 0.01]
+    errs = [0.1, 0.05, 0.01]
     noisy_obj = [False, True]
-    # funcs = ['parabola']
-    funcs = ['ndquad'] #, 'quartic', 'ndquad']
+    funcs = ['parabola', 'ndquad', 'quartic']
     diagonal = [False, True]
-    batch_sizes = [500, 250, 100]
+    batch_sizes = [1000, 500, 250, 100]
+
     # no kalman
-    # for seed in seeds:
-    #     for lr in lrs:
-    #         for nobj in noisy_obj:
-    #             for f in funcs:
-    #                 for bs in batch_sizes:
-    #                     args = arguments.get_args()
-    #                     args.n_iters = 100
-    #                     args.batch_size = bs
-    #                     args.seed = seed
-    #                     args.lr = lr
-    #                     args.kf_error_thresh = 0.0
-    #                     args.log_dir = log_dir
-    #                     args.no_kalman = True
-    #                     args.noisy_objective = nobj
-    #                     args.func = f
-    #                     pid = run_vpg_variant.remote(args)
-    #                     gets.append(pid)
+    for seed in seeds:
+        for lr in lrs:
+            for nobj in noisy_obj:
+                for f in funcs:
+                    for bs in batch_sizes:
+                        args = arguments.get_args()
+                        args.n_iters = 100
+                        args.batch_size = bs
+                        args.seed = seed
+                        args.lr = lr
+                        args.kf_error_thresh = 0.0
+                        args.log_dir = log_dir
+                        args.no_kalman = True
+                        args.noisy_objective = nobj
+                        args.func = f
+                        pid = run_vpg_variant.remote(args)
+                        gets.append(pid)
 
     # with kalman
     for seed in seeds:
