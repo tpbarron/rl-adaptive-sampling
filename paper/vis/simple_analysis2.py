@@ -69,13 +69,13 @@ fig = plt.figure(figsize=(4, 3))
 
 
 #path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
-path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r4_all/'
-path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/temp2/'
+path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
+path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
 
-#func = 'parabola'
-func = 'ndquad'
+func = 'parabola'
+#func = 'ndquad'
 use_diagonal_approx = 1
-seeds = list(range(10))
+seeds = list(range(5))
 lr = 0.1
 
 # no kalman

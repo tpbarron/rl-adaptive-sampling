@@ -67,7 +67,7 @@ def optimize(args):
                 grad = model.flattened_grad().numpy() * objv
                 kf.update(grad)
                 if nsample >= 10 and np.mean(kf.e) < args.kf_error_thresh:
-                    print ("Reached error: ", np.mean(kf.e), ", nsamples: ", nsample)
+                    #print ("Reached error: ", np.mean(kf.e), ", nsamples: ", nsample)
                     break
 
             # print ("grad est, true grad, observation: ", xt, f.jacobian(minimum), y)
@@ -90,7 +90,7 @@ def optimize(args):
             # print (torch.from_numpy(kf.xt).float())
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
-        # print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
+        #print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
         if np.any(model.log_std.data.numpy() < np.log(args.min_std)):
             # print ("Setting min variance to ", args.min_std)
             for p in range(model.nparam//2):
