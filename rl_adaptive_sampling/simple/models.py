@@ -33,7 +33,6 @@ class GaussianModel(nn.Module):
         g = torch.FloatTensor(self.nparam)
         ind = 0
         for p in self.parameters():
-            print (p)
             gnumel = p.grad.data.numel()
             g[ind:ind+gnumel] = p.grad.data.view(-1).detach()
             ind += gnumel

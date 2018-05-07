@@ -70,12 +70,12 @@ fig = plt.figure(figsize=(4, 3))
 
 #path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
 path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r4_all/'
-path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/temp/'
+path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/temp2/'
 
 #func = 'parabola'
 func = 'ndquad'
 use_diagonal_approx = 1
-seeds = list(range(2))
+seeds = list(range(10))
 lr = 0.1
 
 # no kalman
@@ -108,11 +108,12 @@ errs = [0.2, 0.1, 0.05, 0.01]
 lrs = [0.1]
 errs = [0.2, 0.1]
 colors = ['#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
-sos_init = 0.0
+sos_init = 100.0
 
+seed = 0
 for e, c in zip(errs, colors):
-    batch_sizes1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/0/log_batch_sizes.npy')
-    mu_est1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/0/log_min_mu_est.npy')
+    batch_sizes1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/'+str(seed)+'/log_batch_sizes.npy')
+    mu_est1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj0_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/'+str(seed)+'/log_min_mu_est.npy')
     batch_ends1 = np.cumsum(batch_sizes1)
     print (batch_ends1)
     x = batch_ends1
