@@ -7,11 +7,11 @@ import npg
 import importlib
 
 # BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
-# BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
-BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
+BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
+#BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
 NPG_LOG_DIR = "npg/5_8_18r1/"
 
-ray.init()
+ray.init(num_cpus=16)
 
 @ray.remote
 def run_npg_variant(args):
@@ -27,6 +27,7 @@ diagonal = [True]
 batch_sizes = [1000, 500, 250, 100]
 sos_init = [100.0, 250.0]
 
+print ("No kalman variants: ", len(seeds) * len(batch_sizes) * len(lrs))
 for seed in seeds:
    for lr in lrs:
        for bs in batch_sizes:
@@ -42,7 +43,7 @@ for seed in seeds:
            pid = run_npg_variant.remote(args)
            gets.append(pid)
 
-# with kalman: 960 variants
+print ("Kalman variants: ", len(seeds) * len(errs) * len(lrs) * len(diagonal) * len(sos_init))
 for seed in seeds:
     for lr in lrs:
         for err in errs:

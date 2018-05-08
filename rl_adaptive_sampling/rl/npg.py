@@ -121,8 +121,8 @@ def eval(args, env, model, stats, avgn=5, render=False):
 
     eval_reward /= avgn
     stats['eval_rewards'].append(eval_reward)
-    sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    sys.stdout.flush()
+    #sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    #sys.stdout.flush()
 
     return eval_reward
 
@@ -415,8 +415,9 @@ def optimize(args):
         avg_eval = eval(args, env, model, stats)
         log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
+        joblib.dump(stats, os.path.join(args.log_dir, 'stats_'+str(e)))
         e += 1
-        print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        #print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
         last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
             best_eval = avg_eval
