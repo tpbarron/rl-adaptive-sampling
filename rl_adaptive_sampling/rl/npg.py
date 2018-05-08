@@ -63,36 +63,6 @@ max_reward, avg_reward, total_samples = -np.inf, 0.0, 0.0
 
 zfilter = ZFilter(env.observation_space.shape)
 
-# dists = []
-# for i in range(100):
-#     s = env.reset()
-#     n, _, d, _ = env.step(env.action_space.sample())
-#     dist = np.linalg.norm(s-n)
-#     dists.append(dist)
-#     if d:
-#         s = env.reset()
-# print ("Avg dist: ", sum(dists) / len(dists))
-
-# class KernelTransform(nn.Module):
-#
-#     def __init__(self, env, nfeatures=500, bandwidth=1.0):
-#         super(KernelTransform, self).__init__()
-#         self.num_inputs = env.observation_space.shape[0]
-#         # n_outputs = env.action_space.n
-#         # n_outputs = action_space.shape[0]
-#
-#         # self.num_inputs = num_inputs
-#         self.P = Variable(torch.from_numpy(np.random.normal(size=(nfeatures, self.num_inputs)))).float()
-#         self.bandwidth = bandwidth
-#         self.nfeatures = nfeatures
-#         self.phi = Variable(torch.from_numpy(np.random.uniform(-np.pi, np.pi, nfeatures))).float()
-#
-#     def forward(self, state):
-#         ps = torch.matmul(state, self.P.t()) / self.bandwidth
-#         f = torch.sin(ps + self.phi)
-#         return f
-
-
 class Policy(nn.Module):
 
     def __init__(self, n_inputs, n_outputs, is_continuous):
@@ -270,7 +240,7 @@ def train(model, opt, opt_v, kf, ep=0):
         kf.reset()
 
     step = 0
-    while (not args.no_kalman and np.linalg.norm(kf.e)**2.0/kf.state_dim > args.kf_error_thresh or step < 100) and step < args.batch_size:
+    while (not args.no_kalman and np.mean(kf.e) > args.kf_error_thresh or step < 20) and step < args.batch_size:
     # while np.linalg.norm(kf.e)**2.0/nparams > args.kf_error_thresh and step < args.batch_size:
         # obs = zfilter(obs)
         # print ("obs: ", obs)
@@ -379,7 +349,7 @@ def train(model, opt, opt_v, kf, ep=0):
         # print ("")
         sys.stdout.write("\n")
         # print (kf.Pt, kf.Rt)
-        print ("Updating after ", step, " steps; total samples: ", total_samples, " with error ", np.linalg.norm(kf.e)**2.0/nparams)
+        print ("Updating after ", step, " steps; total samples: ", total_samples, " with error ", np.mean(kf.e))
         # save data; don't worry about saving grad_grad_log_prob_adv since c
         # computable from other data and saves time at runtime
         np.save(os.path.join(args.log_dir, 'grad_log_pi'+str(ep)+'.npy'), grad_log_pi[0:step,:])
@@ -454,7 +424,7 @@ def main():
     # opt_v = optim.Adam(model.v.parameters(), lr=args.lr)
     opt_v = optim.LBFGS(model.v.parameters(), lr=args.lr)
     opt = NaturalSGD(model.pi.parameters(), lr=args.lr)
-    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=False, use_diagonal_approx=True, error_init=10.0, sos_init=100.0)
+    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=False, use_diagonal_approx=True, error_init=1.0, sos_init=1000.0)
 
     best_eval = 0
     last_save_step = 0

@@ -48,23 +48,23 @@ class NaturalSGD(Optimizer):
             i = e
         return ps
 
-    # def update_fisher(self, action_log_prob, alpha=0.9):
-    #     """
-    #     Updating the fisher online.
-    #     """
-    #     Fi = torch.FloatTensor(self.F.shape).zero_()
-    #     self.n += 1
-    #
-    #     self.zero_grad()
-    #     action_log_prob.backward(retain_graph=True)
-    #     grad = self.get_flattened_grad()
-    #     Fi = torch.mm(grad, torch.transpose(grad, 0, 1))
-    #     self.F = alpha * self.F + (1 - alpha) * Fi
-    #     min_eig = torch.min(torch.eig(self.F)[0])
-    #     while min_eig < 0:
-    #         print ("Fisher eig < 0: ", float(min_eig))
-    #         self.F = self.F + 1e-8 * torch.eye(self.F.shape[0])
-    #         min_eig = torch.min(torch.eig(self.F)[0])
+    def update_fisher(self, action_log_prob, alpha=0.9):
+        """
+        Updating the fisher online.
+        """
+        Fi = torch.FloatTensor(self.F.shape).zero_()
+        self.n += 1
+
+        self.zero_grad()
+        action_log_prob.backward(retain_graph=True)
+        grad = self.get_flattened_grad()
+        Fi = torch.mm(grad, torch.transpose(grad, 0, 1))
+        self.F = alpha * self.F + (1 - alpha) * Fi
+        min_eig = torch.min(torch.eig(self.F)[0])
+        while min_eig < 0:
+            print ("Fisher eig < 0: ", float(min_eig))
+            self.F = self.F + 1e-8 * torch.eye(self.F.shape[0])
+            min_eig = torch.min(torch.eig(self.F)[0])
 
     def compute_fisher(self, action_log_probs):
         # compute logprob grad for each action

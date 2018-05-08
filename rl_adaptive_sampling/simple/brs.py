@@ -37,7 +37,7 @@ def optimize(args):
         log_grad_true.append(0)
         log_grad_obs.append(np.array([0]))
         log_cov_error.append(kf.Pt)
-        log_min_est.append(model.x)
+        log_min_est.append(model.x.copy())
         log_abs_error_est.append(kf.e)
         log_abs_error_true.append(0)
         log_obs_noise_est.append(kf.Rt)
@@ -48,6 +48,8 @@ def optimize(args):
             delta = np.random.normal(size=model.x.shape)
             z_minus = model.x - args.nu * delta
             z_plus = model.x + args.nu * delta
+            print ("delta: ", delta.shape, z_minus.shape)
+            input("")
 
             fz_minus = f.f(z_minus)
             fz_plus = f.f(z_plus)
@@ -56,15 +58,15 @@ def optimize(args):
                 fz_plus = fz_plus + np.random.normal(size=model.x.shape)
 
             grad_est = (fz_plus - fz_minus) / args.nu
-            # print (grad_est.shape)
+            print (grad_est.shape, fz_plus.shape, fz_minus.shape)
             ys.append(grad_est)
 
             if not args.no_kalman:
                 # already know grad just modulate by objective
                 kf.update(grad_est)
-                if np.linalg.norm(kf.e)**2.0 / kf.state_dim < args.kf_error_thresh:
-                    print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)
-                    print ("Nsamples: ", nsample)
+                if np.mean(kf.e) < args.kf_error_thresh:
+                    print ("Reached error: ", np.mean(kf.e))
+                    # print ("Nsamples: ", nsample)
                     break
 
             # print ("grad est, true grad, observation: ", xt, f.jacobian(minimum), y)
@@ -72,13 +74,15 @@ def optimize(args):
             log_grad_true.append(0)
             log_grad_obs.append(grad_est)
             log_cov_error.append(kf.Pt)
-            log_min_est.append(model.x)
+            log_min_est.append(model.x.copy())
             log_abs_error_est.append(kf.e)
             log_abs_error_true.append(0)
             log_obs_noise_est.append(kf.Rt)
 
         if args.no_kalman:
             gt = np.mean(np.array(ys), axis=0)
+            print (gt.shape)
+            input("g")
         else:
             gt = kf.xt
         model.x = model.x - args.lr * gt
