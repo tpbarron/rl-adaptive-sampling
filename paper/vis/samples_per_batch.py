@@ -10,21 +10,23 @@ plt.rc('ytick', labelsize='small')
 
 fig = plt.figure(figsize=(4, 3))
 
-path = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_7_18r1/'
-path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_7_18r1/'
+algo = 'npg'
 
-# func = 'parabola'
-func = 'ndquad'
+path = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_7_18r1/'
+path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_7_18r1/'
+
+func = 'parabola'
+# func = 'ndquad'
 use_diagonal_approx = 1
 seeds = list(range(5))
-lr = 0.1
+lr = 0.05
 
 # kalman
 # errs = [0.2, 0.1, 0.05, 0.01]
 lrs = [0.1]
 errs = [0.2]#, 0.1]
 colors = ['#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
-sos_init = 25.0
+sos_init = 100.0
 
 for e, c in zip(errs, colors):
     xs = []

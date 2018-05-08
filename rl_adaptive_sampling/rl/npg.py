@@ -121,8 +121,8 @@ def eval(args, env, model, stats, avgn=5, render=False):
 
     eval_reward /= avgn
     stats['eval_rewards'].append(eval_reward)
-    # sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    # sys.stdout.flush()
+    sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    sys.stdout.flush()
 
     return eval_reward
 
@@ -207,7 +207,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
         kf.reset()
 
     step = 0
-    while (not args.no_kalman and np.mean(kf.e) > args.kf_error_thresh or step < 20) and step < args.batch_size:
+    while (not args.no_kalman and np.mean(kf.e) > args.kf_error_thresh or step < 50) and step < args.batch_size:
         # obs = zfilter(obs)
         # print ("obs: ", obs)
         ep_states.append(obs)
@@ -372,6 +372,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
     # print ("Vinput: ", v_inputs.shape, v_targets.shape, loss.data)
     # input("")
 
+    stats['total_samples'] += step
     return step
 
 
@@ -407,6 +408,7 @@ def optimize(args):
 
     best_eval = 0
     last_save_step = 0
+    last_iter_samples = 0
     e = 0
     while stats['total_samples'] < args.max_samples:
         train(args, env, model, opt, opt_v, kf, stats, ep=e)
@@ -414,7 +416,8 @@ def optimize(args):
         log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        # print ("total samples: ", stats['total_samples'])
+        print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
             best_eval = avg_eval
             last_save_step = stats['total_samples']

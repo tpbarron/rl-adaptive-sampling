@@ -56,7 +56,7 @@ errs = [0.2, 0.1, 0.05, 0.01]
 lrs = [0.1]
 errs = [0.2, 0.1]
 colors = ['#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
-sos_init = 100.0
+sos_init = 10.0
 
 
 def sync_data(xs, ys):

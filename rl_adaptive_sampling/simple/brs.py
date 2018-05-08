@@ -48,8 +48,6 @@ def optimize(args):
             delta = np.random.normal(size=model.x.shape)
             z_minus = model.x - args.nu * delta
             z_plus = model.x + args.nu * delta
-            print ("delta: ", delta.shape, z_minus.shape)
-            input("")
 
             fz_minus = f.f(z_minus)
             fz_plus = f.f(z_plus)
