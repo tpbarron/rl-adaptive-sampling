@@ -82,7 +82,7 @@ class FFPolicy(nn.Module):
             else:
                 c = normal.Normal(x, self.pi.log_std.exp())
                 action = c.sample()
-                action_log_prob = c.log_prob(action).sum()
+                action_log_prob = c.log_prob(action).mean()
                 entropy = c.entropy()
         else: # discrete
             if deterministic:
@@ -207,7 +207,9 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
         kf.reset()
 
     step = 0
-    while (not args.no_kalman and np.mean(kf.e) > args.kf_error_thresh or step < 50) and step < args.batch_size:
+    while step < args.batch_size:
+        if not args.no_kalman and np.mean(kf.e) < args.kf_error_thresh and step > 50:
+            break
         # obs = zfilter(obs)
         # print ("obs: ", obs)
         ep_states.append(obs)
