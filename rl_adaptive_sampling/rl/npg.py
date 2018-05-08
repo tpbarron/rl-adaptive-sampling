@@ -2,7 +2,6 @@
 Linear Natural Policy Gradient
 """
 
-import argparse
 import sys
 import os
 import csv
@@ -24,45 +23,6 @@ from rl_adaptive_sampling.opt.npg_opt import NaturalSGD
 from rl_adaptive_sampling.opt.kalman_opt import KalmanFilter
 from rl_adaptive_sampling.rl.running_state import ZFilter
 
-parser = argparse.ArgumentParser(description='RL Pol Grad')
-parser.add_argument('--lr', type=float, default=1e-2,
-                    help='learning rate (default: 1e-2)')
-parser.add_argument('--batch-size', type=int, default=1000,
-                    help='training batch size (default: 1000)')
-parser.add_argument('--max-samples', type=int, default=1e6,
-                    help='maximum num steps to take (default: 1e6)')
-parser.add_argument('--gamma', type=float, default=0.99,
-                    help='discount factor (default: 0.99)')
-parser.add_argument('--tau', type=float, default=0.97,
-                    help='GAE parameter (default: 0.97)')
-parser.add_argument('--kf-error-thresh', type=float, default=0.025,
-                    help='threshold for update expected error (default: 0.025)')
-parser.add_argument('--env-name', type=str, default='CartPole-v0',
-                    help='env to train on (default: CartPole-v0)')
-parser.add_argument('--log-dir', type=str, default='/tmp/rl_kalman/',
-                    help='dir to save logs (default: /tmp/rl_kalman/)')
-parser.add_argument('--seed', type=int, default=1,
-                    help='random seed (default: 1)')
-parser.add_argument('--no-kalman', action='store_true', default=False,
-                    help='do not use kf estimate (default: false)')
-args = parser.parse_args()
-
-os.makedirs(args.log_dir, exist_ok=True)
-joblib.dump(args, os.path.join(args.log_dir, 'args_snapshot.pkl'))
-
-log_file = open(os.path.join(args.log_dir, 'log.csv'), 'w')
-log_writer = csv.writer(log_file)
-
-np.random.seed(args.seed)
-torch.manual_seed(args.seed)
-
-env = gym.make(args.env_name)
-train_rewards = []
-eval_rewards = []
-max_reward, avg_reward, total_samples = -np.inf, 0.0, 0.0
-
-zfilter = ZFilter(env.observation_space.shape)
-
 class Policy(nn.Module):
 
     def __init__(self, n_inputs, n_outputs, is_continuous):
@@ -77,6 +37,7 @@ class Policy(nn.Module):
         x = self.fc1(x)
         return x
 
+
 class Value(nn.Module):
 
     def __init__(self, n_inputs):
@@ -88,6 +49,7 @@ class Value(nn.Module):
     def forward(self, x):
         x = self.fc1v(x)
         return x
+
 
 class FFPolicy(nn.Module):
 
@@ -135,7 +97,7 @@ class FFPolicy(nn.Module):
         return action, action_log_prob, v, entropy
 
 
-def eval(model, avgn=5, render=False):
+def eval(args, env, model, stats, avgn=5, render=False):
     model.eval()
     if render:
         env.reset()
@@ -158,15 +120,17 @@ def eval(model, avgn=5, render=False):
             eval_reward += reward
 
     eval_reward /= avgn
-    eval_rewards.append(eval_reward)
-    sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    sys.stdout.flush()
+    stats['eval_rewards'].append(eval_reward)
+    # sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    # sys.stdout.flush()
 
     return eval_reward
+
 
 def get_num_params(model):
     numel = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return numel
+
 
 def get_flattened_grad(opt, model):
     numel = get_num_params(model)
@@ -180,6 +144,7 @@ def get_flattened_grad(opt, model):
     # reshape to nx1 vector
     g = g.view(-1, 1).numpy()
     return g
+
 
 def unflatten_grad(opt, grad):
     # take gradient and reshape back into param matrices
@@ -196,6 +161,7 @@ def unflatten_grad(opt, grad):
         i = e
     return ps
 
+
 def set_grad(opt, model, x):
     # print (x.shape)
     grads = unflatten_grad(opt, x)
@@ -204,13 +170,14 @@ def set_grad(opt, model, x):
         p.grad.data = grads[i]
         i += 1
 
+
 def compute_grad_log_pi(opt, model, action_log_prob):
     opt.zero_grad()
     action_log_prob.backward(retain_graph=True)
     return get_flattened_grad(opt, model)
 
-def train(model, opt, opt_v, kf, ep=0):
-    global max_reward, avg_reward, total_samples
+
+def train(args, env, model, opt, opt_v, kf, stats, ep=0):
     nparams = get_num_params(model.pi)
     model.train()
 
@@ -241,7 +208,6 @@ def train(model, opt, opt_v, kf, ep=0):
 
     step = 0
     while (not args.no_kalman and np.mean(kf.e) > args.kf_error_thresh or step < 20) and step < args.batch_size:
-    # while np.linalg.norm(kf.e)**2.0/nparams > args.kf_error_thresh and step < args.batch_size:
         # obs = zfilter(obs)
         # print ("obs: ", obs)
         ep_states.append(obs)
@@ -262,10 +228,6 @@ def train(model, opt, opt_v, kf, ep=0):
         if not args.no_kalman:
             # print (action_log_prob)
             grad_log_pi[step,:] = compute_grad_log_pi(opt, model.pi, action_log_prob)[:,0]
-            # print (grad_log_pi[step,:])
-            # input("")
-            # opt.update_fisher(action_log_prob)
-
             if step > 0:
                 # since don't want to do the extra work to compute V(s_t+1) at every step
                 # this will lag one step behind
@@ -291,14 +253,6 @@ def train(model, opt, opt_v, kf, ep=0):
                         # print (grad_log_pi_adv[step-1,k,:][:,np.newaxis].shape)
                         # print (kf.Pt)
                         kf.update(grad_log_pi_adv[step-1,k,:][:,np.newaxis])
-                    # kf.update(grad_log_pi_adv[step-1,step-1,:])
-                        # if np.any(np.isnan(kf.Pt)):
-                        #     print (grad_log_pi_adv[step-1,k,:][:,np.newaxis])
-                        #     print ("kt: ", kf.Kt)
-                        #     print ("rt: ", kf.Rt)
-                        #     print ("sos: ", kf.sos)
-                        #     print ("mean: ", kf.mean)
-                        #     input("")
 
                 kalman_errors[step-1,:] = kf.e[:,0]
                 kalman_variances[step-1,:] = kf.Rt[:,0]
@@ -308,13 +262,13 @@ def train(model, opt, opt_v, kf, ep=0):
 
         if done:
             # print ("Episode reward: ", traj_rewards)
-            train_rewards.append(traj_rewards)
-            if traj_rewards > max_reward:
-                max_reward = traj_rewards
-            avg_reward = sum(train_rewards[-10:]) / len(train_rewards[-10:])
+            stats['train_rewards'].append(traj_rewards)
+            if traj_rewards > stats['max_reward']:
+                stats['max_reward'] = traj_rewards
+            stats['avg_reward'] = sum(stats['train_rewards'][-10:]) / len(stats['train_rewards'][-10:])
             # print (max_reward, avg_reward)
-            sys.stdout.write("Training: max reward: %f, window (10) average reward: %f \r" % (max_reward, avg_reward))
-            sys.stdout.flush()
+            # sys.stdout.write("Training: max reward: %f, window (10) average reward: %f \r" % (stats['max_reward'], stats['avg_reward']))
+            # sys.stdout.flush()
 
             if not args.no_kalman:
                 # compute last advantage for accumulation
@@ -344,12 +298,11 @@ def train(model, opt, opt_v, kf, ep=0):
             if step != args.batch_size:
                 done = False
 
-    total_samples += step
+    # total_samples += step
     if not args.no_kalman:
         # print ("")
-        sys.stdout.write("\n")
-        # print (kf.Pt, kf.Rt)
-        print ("Updating after ", step, " steps; total samples: ", total_samples, " with error ", np.mean(kf.e))
+        # sys.stdout.write("\n")
+        # print ("Updating after ", step, " steps; total samples: ", stats['total_samples'], " with error ", np.mean(kf.e))
         # save data; don't worry about saving grad_grad_log_prob_adv since c
         # computable from other data and saves time at runtime
         np.save(os.path.join(args.log_dir, 'grad_log_pi'+str(ep)+'.npy'), grad_log_pi[0:step,:])
@@ -419,31 +372,57 @@ def train(model, opt, opt_v, kf, ep=0):
     # print ("Vinput: ", v_inputs.shape, v_targets.shape, loss.data)
     # input("")
 
-def main():
+    return step
+
+
+def optimize(args):
+    print ("Starting variant: ", args)
+    old_log_dir = args.log_dir
+    args.log_dir = ""
+    fullpath = os.path.join(old_log_dir, str(args).replace(' ', '').replace(',','_').replace('=','').replace('\'', '').replace('(', '').replace(')', '').replace('/', '.'))
+    args.log_dir = fullpath
+    os.makedirs(args.log_dir, exist_ok=True)
+    joblib.dump(args, os.path.join(args.log_dir, 'args_snapshot.pkl'))
+    log_file = open(os.path.join(args.log_dir, 'log.csv'), 'w')
+    log_writer = csv.writer(log_file)
+
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    env = gym.make(args.env_name)
+    stats = {}
+    stats['train_rewards'] = []
+    stats['eval_rewards'] = []
+    stats['max_reward'] = -np.inf
+    stats['avg_reward'] = 0.0
+    stats['total_samples'] = 0.0
+
+    zfilter = ZFilter(env.observation_space.shape)
+
     model = FFPolicy(env)
     # opt_v = optim.Adam(model.v.parameters(), lr=args.lr)
     opt_v = optim.LBFGS(model.v.parameters(), lr=args.lr)
     opt = NaturalSGD(model.pi.parameters(), lr=args.lr)
-    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=False, use_diagonal_approx=True, error_init=1.0, sos_init=1000.0)
+    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=args.use_last_error, use_diagonal_approx=args.use_diagonal_approx, error_init=1.0, sos_init=args.sos_init)
 
     best_eval = 0
     last_save_step = 0
     e = 0
-    while total_samples < args.max_samples:
-        train(model, opt, opt_v, kf, ep=e)
-        avg_eval = eval(model) #, render=True)
-        log_writer.writerow([total_samples, max_reward, avg_reward, avg_eval])
+    while stats['total_samples'] < args.max_samples:
+        train(args, env, model, opt, opt_v, kf, stats, ep=e)
+        avg_eval = eval(args, env, model, stats)
+        log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        print ("total samples: ", total_samples)
-
-        if avg_eval > best_eval or last_save_step - total_samples > 10000:
+        # print ("total samples: ", stats['total_samples'])
+        if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
             best_eval = avg_eval
-            last_save_step = total_samples
+            last_save_step = stats['total_samples']
             # save model if evaluation was better
-            torch.save(model, os.path.join(args.log_dir, "model_ep"+str(e)+"_samples"+str(total_samples)+"_eval"+str(avg_eval)+".pth"))
+            torch.save(model, os.path.join(args.log_dir, "model_ep"+str(e)+"_samples"+str(stats['total_samples'])+"_eval"+str(avg_eval)+".pth"))
     log_file.close()
 
 
 if __name__ == '__main__':
-    main()
+    import arguments
+    optimize(arguments.get_args())
