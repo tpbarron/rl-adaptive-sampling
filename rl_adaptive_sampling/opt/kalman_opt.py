@@ -10,7 +10,8 @@ class KalmanFilter(object):
                  use_diagonal_approx=True,
                  sos_init=10.0,
                  error_init=1.0,
-                 reset_observation_noise=False):
+                 reset_observation_noise=False,
+                 reset_state=False):
         self.state_dim = state_dim
         self.use_last_error = use_last_error
         self.min_error_init = min_error_init
@@ -18,6 +19,7 @@ class KalmanFilter(object):
         self.sos_init = sos_init
         self.error_init = error_init
         self.reset_observation_noise = reset_observation_noise
+        self.reset_state = reset_state
 
         attrs = vars(self)
         print ('KF parameters:' + ', '.join("%s: %s" % item for item in attrs.items()))
@@ -64,7 +66,7 @@ class KalmanFilter(object):
         self.sos.fill(self.sos_init)
 
         # set xt on first step
-        if self.xt is None:
+        if self.reset_state or self.xt is None:
             self.xt = np.zeros((self.state_dim, 1))
 
         # print ("OLD: ", self.xt_old)

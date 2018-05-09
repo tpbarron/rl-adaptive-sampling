@@ -23,12 +23,16 @@ parser.add_argument('--use-last-error', action="store_true", default=False,
                     error in Kalman filter (default: False)')
 parser.add_argument('--env-name', type=str, default='CartPoleBulletEnv-v0',
                     help='env to train on (default: CartPoleBulletEnv-v0)')
+parser.add_argument('--pi-optim', type=str, default='sgd',
+                    help='policy optimizer (default: sgd)')
 parser.add_argument('--log-dir', type=str, default='/tmp/rl_kalman/',
                     help='dir to save logs (default: /tmp/rl_kalman/)')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--no-kalman', action='store_true', default=False,
                     help='do not use kf estimate (default: false)')
+parser.add_argument('--reset-kf-state', action='store_true', default=False,
+                    help='reset kf state to 0 at each iter (default: false)')
 args = parser.parse_args()
 
 def get_args():
