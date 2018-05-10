@@ -210,27 +210,19 @@ def set_grad(opt, model, x):
         p.grad.data = grads[i]
         i += 1
 
+grads = []
+true_grad = None
 
-# def compute_grad_log_pi(opt, model, action_log_prob):
-#     opt.zero_grad()
-#     action_log_prob.backward(retain_graph=True)
-#     return get_flattened_grad(opt, model)
-
+from collections import deque
+mean_batch_sizes = deque(maxlen=10)
+mean_batch_sizes.append(500)
 
 def train(args, env, model, opt, opt_v, kf, stats, ep=0):
     nparams = get_num_params(model.pi)
+    global grads, true_grad
     model.train()
-    # args.kf_error_thresh = 0.95 * args.kf_error_thresh
-    # print ("Error thresh: ", args.kf_error_thresh)
-    # if not args.no_kalman:
-    #     # make as large as max batch
-    #     gae_est = np.zeros((args.batch_size, 1))
-    #     gae_coef = np.zeros((args.batch_size, 1))
-    #     grad_log_pi = np.zeros((args.batch_size, nparams))
-    #     grad_log_pi_adv = np.zeros((args.batch_size, args.batch_size, nparams))
-    #     kalman_errors = np.zeros((args.batch_size, nparams))
-    #     kalman_variances = np.zeros((args.batch_size, nparams))
-    traj_rewards = 0
+
+    traj_reward = 0
     last_reset = 0
 
     # hold action vars and probs
@@ -240,7 +232,11 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
     ep_entropies = []
     ep_values = []
     ep_rewards = []
-    masks = [1]
+
+    traj_action_log_probs = []
+    traj_values = []
+    traj_rewards = []
+    traj_entropies = []
 
     done = False
     obs = env.reset()
@@ -261,149 +257,140 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
             action_np = np.clip(action_np, env.action_space.low, env.action_space.high)
         obs, reward, done, _ = env.step(action_np)
 
-        ep_values.append(value)
-        ep_rewards.append(reward)
-        ep_actions.append(action)
-        ep_action_log_probs.append(action_log_prob)
-        ep_entropies.append(entropy)
-        masks.append(1 if not done else 0)
+        traj_values.append(value)
+        traj_rewards.append(reward)
+        traj_action_log_probs.append(action_log_prob)
+        traj_entropies.append(entropy)
 
-        traj_rewards += reward
+        traj_reward += reward
         step += 1
         traj_step += 1
 
         if done:
             # print ("Episode reward: ", traj_rewards)
-            stats['train_rewards'].append(traj_rewards)
-            if traj_rewards > stats['max_reward']:
-                stats['max_reward'] = traj_rewards
+            stats['train_rewards'].append(traj_reward)
+            if traj_reward > stats['max_reward']:
+                stats['max_reward'] = traj_reward
             stats['avg_reward'] = sum(stats['train_rewards'][-10:]) / len(stats['train_rewards'][-10:])
-            # print (max_reward, avg_reward)
-            # sys.stdout.write("Training: max reward: %f, window (10) average reward: %f \r" % (stats['max_reward'], stats['avg_reward']))
-            # sys.stdout.flush()
 
             if not args.no_kalman:
                 # compute GAE and update KF
                 R = torch.zeros(1, 1)
-                ep_values.append(Variable(R))
+                traj_values.append(Variable(R))
                 R = Variable(R)
                 gae = torch.zeros(1, 1)
                 policy_loss = 0.0
-                assert step == len(ep_rewards)
-                for i in reversed(range(step-traj_step, step)):
-                    # print (i)
-                    # print (masks[i+1])
-                    R = args.gamma * R * masks[i+1] + ep_rewards[i]
-                    advantage = R - ep_values[i]
-                    delta_t = ep_rewards[i] + args.gamma * ep_values[i + 1].data * masks[i + 1] - ep_values[i].data
-                    gae = gae * args.gamma * args.tau * masks[i + 1] + delta_t
-                    policy_loss = policy_loss - ep_action_log_probs[i] * Variable(gae) #- 0.01 * ep_entropies[i]
-                policy_loss = policy_loss / traj_step
+                for i in reversed(range(len(traj_rewards))):
+                    R = args.gamma * R + traj_rewards[i]
+                    advantage = R - traj_values[i]
+                    delta_t = traj_rewards[i] + args.gamma * traj_values[i + 1].data - traj_values[i].data
+                    gae = gae * args.gamma * args.tau + delta_t
+                    policy_loss = policy_loss - traj_action_log_probs[i] * Variable(gae) #- 0.01 * ep_entropies[i]
+
+                opt.zero_grad()
                 policy_loss.backward(retain_graph=True)
-                del ep_values[-1]
                 grad = get_flattened_grad(opt, model.pi)
-                kf.update(grad)
-                # print ("GRAD: ", grad.shape, len(ep_rewards), traj_step, np.mean(kf.e))
-                # input("")
-            traj_rewards = 0
+                grads.append(grad)
+
+                # print (np.mean(np.asarray(mean_batch_sizes)))
+                mean_bs = np.mean(np.asarray(mean_batch_sizes))
+                policy_loss = policy_loss / mean_bs
+                opt.zero_grad()
+                policy_loss.backward(retain_graph=True)
+                normed_grad = get_flattened_grad(opt, model.pi)
+                kf.update(normed_grad)
+
+                del traj_values[-1]
+
+            # print ("traj length: ", traj_step)
+
+            traj_reward = 0
             traj_step = 0
-            obs = env.reset()
+
+            ep_values.append(np.asarray(traj_values))
+            ep_rewards.append(np.asarray(traj_rewards))
+            ep_action_log_probs.append(np.asarray(traj_action_log_probs))
+            ep_entropies.append(np.asarray(traj_entropies))
+
+            del (traj_action_log_probs[:])
+            del (traj_values[:])
+            del (traj_rewards[:])
+            del (traj_entropies[:])
 
             if not args.no_kalman and np.mean(kf.e) < args.kf_error_thresh and step > 10:
-                print ("Breaking at error ", np.mean(kf.e))
+                # print ("Breaking at error ", np.mean(kf.e))
                 break
-            elif step > args.batch_size:
+            elif step >= args.batch_size:
                 break
             elif step < args.batch_size:
                 # if not on final step, reset done
                 done = False
+                obs = env.reset()
+
 
     policy_loss = 0
     value_loss = 0
 
-    R = torch.zeros(1, 1)
-    if not done:
-        # get last state value est
-        state = Variable(torch.from_numpy(obs)).float()
-        with torch.no_grad():
-            x, value = model(state)
-        R = value.data
+    # print ("ntrajs: ", len(ep_rewards))
+    for j in range(len(ep_rewards)): # loop over trajs
+        traj_values = list(ep_values[j])
+        traj_rewards = ep_rewards[j]
+        traj_action_log_probs = ep_action_log_probs[j]
+        R = torch.zeros(1, 1)
+        traj_values.append(Variable(R))
+        R = Variable(R)
+        gae = torch.zeros(1, 1)
+        # traj_pol_loss = 0
+        for i in reversed(range(len(traj_rewards))):
+            R = args.gamma * R + traj_rewards[i]
+            advantage = R - traj_values[i]
+            value_loss = value_loss + 0.5 * advantage.pow(2)
+            delta_t = traj_rewards[i] + args.gamma * traj_values[i + 1].data - traj_values[i].data
+            gae = gae * args.gamma * args.tau + delta_t
+            policy_loss = policy_loss - traj_action_log_probs[i] * Variable(gae) #- 0.01 * ep_entropies[i]
+            # traj_pol_loss = traj_pol_loss - traj_action_log_probs[i] * R
+            # print (policy_loss.data.numpy(), traj_action_log_probs[o])
+        # print ("Fullgrad traj:", traj_pol_loss.data.numpy())
 
-    ep_gaes = []
-    ep_values.append(Variable(R))
-    R = Variable(R)
-    gae = torch.zeros(1, 1)
-    for i in reversed(range(len(ep_rewards))):
-        R = args.gamma * R * masks[i+1] + ep_rewards[i]
-        advantage = R - ep_values[i]
-        value_loss = value_loss + 0.5 * advantage.pow(2)
-        # GAE
-        delta_t = ep_rewards[i] + args.gamma * ep_values[i + 1].data * masks[i + 1] - ep_values[i].data
-        gae = gae * args.gamma * args.tau * masks[i + 1] + delta_t
-        ep_gaes.append(float(gae.data))
-        # print (ep_action_log_probs[i].data.numpy(), gae.numpy())
-        policy_loss = policy_loss - ep_action_log_probs[i] * Variable(gae) #- 0.01 * ep_entropies[i]
-
-    policy_loss = policy_loss / len(ep_rewards)
-    # add lr reg loss to see if helps stability
-    # for weight in model.pi.parameters():
-    #     policy_loss = policy_loss + 0.0001 * weight.norm(2)
-    value_loss = value_loss / len(ep_rewards)
+    policy_loss = policy_loss / step
+    value_loss = value_loss / step
 
     # update policy
-    opt.zero_grad()
+    # opt.zero_grad()
+    # policy_loss.backward()
+    # true_grad = get_flattened_grad(opt, model.pi)
+    # opt.step()
+
     if args.no_kalman:
         # print ("Policy loss: ", policy_loss.data.numpy(), len(ep_rewards))
         policy_loss.backward()
+        # true_grad = get_flattened_grad(opt, model.pi)
+        # opt.zero_grad()
+        # set_grad(opt, model.pi, true_grad)
     else:
+        opt.zero_grad()
         set_grad(opt, model.pi, kf.xt)
-    # torch.nn.utils.clip_grad_norm_(model.pi.parameters(), 20.0)
-    # policy_loss.backward()
     opt.step()
-
-    # v_inputs = torch.from_numpy(np.array(ep_states)).float()
-    # v_targets = torch.from_numpy(np.array(ep_gaes)).float().view(-1, 1)
-    # def value_opt_closure():
-    #     opt_v.zero_grad()
-    #     out = model(v_inputs)[1] # only get value
-    #     loss = F.mse_loss(out, v_targets)
-    #     loss.backward()
-    #     return loss
 
     # update value fn
     opt_v.zero_grad()
     value_loss.backward()
-    # torch.nn.utils.clip_grad_norm_(model.v.parameters(), 20.0)
-    loss = opt_v.step()#value_opt_closure)
+    loss = opt_v.step()
 
+    mean_batch_sizes.append(step)
     stats['total_samples'] += step
+
     return step
 
 
 def optimize(args):
     print ("Starting variant: ", args)
-
-    # args.seed = seed
-    # args.max_samples = 100000
-    # args.batch_size = 5000 # just a large value usually not limiting
-    # args.lr = lr
-    # args.log_dir = log_dir
-    # args.pi_optim = piopt
-    #
-    # args.no_kalman = False
-    # args.kf_error_thresh = err
-    # args.use_diagonal_approx = diag
-    # args.sos_init = sos
-
-    args.log_dir = os.path.join(args.log_dir, "max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state)))
+    args.log_dir = os.path.join(args.log_dir, "env"+args.env_name+"_max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state)))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     print ("Starting variant: ", args.log_dir)
 
     os.makedirs(args.log_dir, exist_ok=True)
     joblib.dump(args, os.path.join(args.log_dir, 'args_snapshot.pkl'))
-
-    import sys
-    sys.exit()
 
     log_file = open(os.path.join(args.log_dir, 'log.csv'), 'w')
     log_writer = csv.writer(log_file)
@@ -430,8 +417,8 @@ def optimize(args):
     if args.pi_optim == 'adam':
         opt = optim.Adam(model.pi.parameters(), lr=args.lr)
     elif args.pi_optim == 'sgd':
-        opt = optim.SGD(model.pi.parameters(), lr=args.lr, momentum=0.9)
-    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=args.use_last_error, use_diagonal_approx=args.use_diagonal_approx, error_init=1.0, sos_init=args.sos_init, reset_state=args.reset_kf_state)
+        opt = optim.SGD(model.pi.parameters(), lr=args.lr, momentum=0.1)
+    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=args.use_last_error, use_diagonal_approx=args.use_diagonal_approx, error_init=1.0, sos_init=args.sos_init, reset_state=args.reset_kf_state, reset_observation_noise=False)
 
     best_eval = 0
     last_save_step = 0
@@ -439,18 +426,56 @@ def optimize(args):
     e = 0
     while stats['total_samples'] < args.max_samples:
         train(args, env, model, opt, opt_v, kf, stats, ep=e)
+
+        global grads, true_grad
+
+        # print (true_grad.shape)
+        # partial_grads = np.array(grads)
+        # print (partial_grads.shape)
+        # summed_partial_grads = np.sum(partial_grads, axis=0)
+        # print (summed_partial_grads.shape)
+        # normed_summed_partial_grads = summed_partial_grads / stats['total_samples']
+        # print (stats)
+        #
+        # print ("Close? ", np.allclose(true_grad, summed_partial_grads))
+        # print ("Close? ", np.allclose(true_grad, normed_summed_partial_grads))
+        #
+        # print (true_grad)
+        # print (normed_summed_partial_grads)
+        # input("")
+
         avg_eval = eval(args, env, model, stats)
         log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        # print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        last_ep_samples = stats['total_samples']-last_iter_samples
         last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
             best_eval = avg_eval
             last_save_step = stats['total_samples']
             # save model if evaluation was better
             torch.save(model.state_dict(), os.path.join(args.log_dir, "model_ep"+str(e)+"_samples"+str(stats['total_samples'])+"_eval"+str(avg_eval)+".pth"))
-        # args.kf_error_thresh = args.kf_error_thresh * 0.95
+        # args.kf_error_thresh = args.kf_error_thresh * 0.995
+
+        # global grads, true_grad
+        # if e % 1 == 0:
+        #     import matplotlib.pyplot as plt
+        #     gs = np.array(grads)
+        #     # print ("grads: ", gs.shape)
+        #     # input("")
+        #     i = 1
+        #     for i in range(len(gs[0])):
+        #         plt.hist(gs[:,i,0]/last_ep_samples, color='gray')
+        #         plt.axvline(np.sum(gs[:,i,0])/last_ep_samples, color='orange')
+        #         plt.axvline(kf.xt[i], color='red')
+        #         plt.axvline(true_grad[i], color='blue')
+        #         # print (gs[:,i,0].shape)
+        #         print ("traj, kalman, true: ", np.sum(gs[:,i,0])/last_ep_samples, kf.xt[i], true_grad[i])
+        #         plt.show()
+        #     # print (len(grads), gs.shape)
+        # grads = []
+        # input("")
     log_file.close()
 
 
