@@ -33,6 +33,8 @@ parser.add_argument('--no-kalman', action='store_true', default=False,
                     help='do not use kf estimate (default: false)')
 parser.add_argument('--reset-kf-state', action='store_true', default=False,
                     help='reset kf state to 0 at each iter (default: false)')
+parser.add_argument('--reset-obs-noise', action='store_true', default=False,
+                    help='reset obs noise in kf at each iter (default: false)')
 args = parser.parse_args()
 
 def get_args():

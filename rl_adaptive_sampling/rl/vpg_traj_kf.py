@@ -161,8 +161,8 @@ def eval(args, env, model, stats, avgn=5, render=False):
 
     eval_reward /= avgn
     stats['eval_rewards'].append(eval_reward)
-    sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    sys.stdout.flush()
+    #sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    #sys.stdout.flush()
 
     return eval_reward
 
@@ -385,7 +385,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
 
 def optimize(args):
     print ("Starting variant: ", args)
-    args.log_dir = os.path.join(args.log_dir, "env"+args.env_name+"_max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state)))
+    args.log_dir = os.path.join(args.log_dir, "env"+args.env_name+"_max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state))+"_resetobs"+str(int(args.reset_obs_noise)))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     print ("Starting variant: ", args.log_dir)
 
@@ -418,7 +418,7 @@ def optimize(args):
         opt = optim.Adam(model.pi.parameters(), lr=args.lr)
     elif args.pi_optim == 'sgd':
         opt = optim.SGD(model.pi.parameters(), lr=args.lr, momentum=0.1)
-    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=args.use_last_error, use_diagonal_approx=args.use_diagonal_approx, error_init=1.0, sos_init=args.sos_init, reset_state=args.reset_kf_state, reset_observation_noise=False)
+    kf = KalmanFilter(state_dim=get_num_params(model.pi), use_last_error=args.use_last_error, use_diagonal_approx=args.use_diagonal_approx, error_init=1.0, sos_init=args.sos_init, reset_state=args.reset_kf_state, reset_observation_noise=args.reset_obs_noise)
 
     best_eval = 0
     last_save_step = 0
@@ -448,7 +448,7 @@ def optimize(args):
         log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        # print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        #print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
         last_ep_samples = stats['total_samples']-last_iter_samples
         last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
