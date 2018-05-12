@@ -53,41 +53,56 @@ class KernelTransform(object):
 
 class Policy(nn.Module):
 
-    def __init__(self, n_inputs, n_outputs, is_continuous):
+    def __init__(self, n_inputs, n_outputs, is_continuous, layers=1):
         super(Policy, self).__init__()
         # policy
-        self.fc1 = nn.Linear(n_inputs, n_outputs)
-        # self.fc2 = nn.Linear(128, n_outputs)
+        self.layers = layers
+        if layers == 1:
+            self.fc1 = nn.Linear(n_inputs, n_outputs)
+            nn.init.xavier_normal_(self.fc1.weight.data)
+        else:
+            self.fc1 = nn.Linear(n_inputs, 64)
+            self.fc2 = nn.Linear(64, n_outputs)
+            nn.init.xavier_normal_(self.fc1.weight.data)
+            nn.init.xavier_normal_(self.fc2.weight.data)
+
         if is_continuous:
             self.log_std = nn.Parameter(torch.zeros(n_outputs))
-        nn.init.xavier_normal_(self.fc1.weight.data)
-        # nn.init.xavier_normal_(self.fc2.weight.data)
 
     def forward(self, x):
-        x = self.fc1(x)
-        # x = self.fc2(F.relu(self.fc1(x)))
+        if self.layers == 1:
+            x = self.fc1(x)
+        else:
+            x = self.fc2(F.relu(self.fc1(x)))
         return x
 
 
 class Value(nn.Module):
 
-    def __init__(self, n_inputs):
+    def __init__(self, n_inputs, layers=1):
         super(Value, self).__init__()
         # value approx
-        self.fc1v = nn.Linear(n_inputs, 1)
-        # self.fc2v = nn.Linear(128, 1)
-        nn.init.xavier_normal_(self.fc1v.weight.data)
-        # nn.init.xavier_normal_(self.fc2v.weight.data)
+        self.layers = layers
+        if layers == 1:
+            self.fc1v = nn.Linear(n_inputs, 1)
+            nn.init.xavier_normal_(self.fc1v.weight.data)
+        else:
+            self.fc1v = nn.Linear(n_inputs, 64)
+            self.fc2v = nn.Linear(64, 1)
+            nn.init.xavier_normal_(self.fc1v.weight.data)
+            nn.init.xavier_normal_(self.fc2v.weight.data)
 
     def forward(self, x):
-        x = self.fc1v(x)
-        # x = self.fc2v(F.relu(self.fc1v(x)))
+        if self.layers == 1:
+            x = self.fc1v(x)
+        else:
+            x = self.fc2v(F.relu(self.fc1v(x)))
         return x
 
 
 class FFPolicy(nn.Module):
 
-    def __init__(self, env):
+    def __init__(self, env, layers=1):
         super(FFPolicy, self).__init__()
         self.env = env
         self.is_continuous = isinstance(env.action_space, spaces.Box)
@@ -101,8 +116,8 @@ class FFPolicy(nn.Module):
         # n_inputs = nfeatures
         # self.kernel = KernelTransform(env, nfeatures=nfeatures, bandwidth=1.0)
 
-        self.pi = Policy(n_inputs, n_outputs, self.is_continuous)
-        self.v = Value(n_inputs)
+        self.pi = Policy(n_inputs, n_outputs, self.is_continuous, layers)
+        self.v = Value(n_inputs, layers)
 
     def forward(self, state):
         state = state.view(-1, self.env.observation_space.shape[0])
@@ -161,9 +176,8 @@ def eval(args, env, model, stats, avgn=5, render=False):
 
     eval_reward /= avgn
     stats['eval_rewards'].append(eval_reward)
-    #sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    #sys.stdout.flush()
-
+    # sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    # sys.stdout.flush()
     return eval_reward
 
 
@@ -357,11 +371,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
     value_loss = value_loss / step
 
     # update policy
-    # opt.zero_grad()
-    # policy_loss.backward()
-    # true_grad = get_flattened_grad(opt, model.pi)
-    # opt.step()
-
+    opt.zero_grad()
     if args.no_kalman:
         # print ("Policy loss: ", policy_loss.data.numpy(), len(ep_rewards))
         policy_loss.backward()
@@ -369,7 +379,6 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
         # opt.zero_grad()
         # set_grad(opt, model.pi, true_grad)
     else:
-        opt.zero_grad()
         set_grad(opt, model.pi, kf.xt)
     opt.step()
 
@@ -386,7 +395,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
 
 def optimize(args):
     print ("Starting variant: ", args)
-    args.log_dir = os.path.join(args.log_dir, "env"+args.env_name+"_max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state))+"_resetobs"+str(int(args.reset_obs_noise)))
+    args.log_dir = os.path.join(args.log_dir, "env"+args.env_name+"_max_samples"+str(args.max_samples)+"_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_piopt"+str(args.pi_optim)+"_error"+str(args.kf_error_thresh)+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_resetkfx"+str(int(args.reset_kf_state))+"_resetobs"+str(int(args.reset_obs_noise))+"_layers"+str(args.layers))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     print ("Starting variant: ", args.log_dir)
 
@@ -412,7 +421,7 @@ def optimize(args):
 
     # zfilter = ZFilter(env.observation_space.shape)
 
-    model = FFPolicy(env)
+    model = FFPolicy(env, layers=args.layers)
     opt_v = optim.Adam(model.v.parameters(), lr=args.lr)
     # opt_v = optim.LBFGS(model.v.parameters(), lr=args.lr)
     if args.pi_optim == 'adam':
@@ -449,7 +458,7 @@ def optimize(args):
         log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        #print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        # print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
         last_ep_samples = stats['total_samples']-last_iter_samples
         last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
