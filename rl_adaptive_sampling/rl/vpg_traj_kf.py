@@ -309,7 +309,8 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
 
                 # print (np.mean(np.asarray(mean_batch_sizes)))
                 mean_bs = np.mean(np.asarray(mean_batch_sizes))
-                policy_loss = policy_loss / mean_bs
+                # if already past mean, just divide by step, which will be more accurate anyway
+                policy_loss = policy_loss / max(step, mean_bs)
                 opt.zero_grad()
                 policy_loss.backward(retain_graph=True)
                 normed_grad = get_flattened_grad(opt, model.pi)
