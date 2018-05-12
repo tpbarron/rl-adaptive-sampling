@@ -176,8 +176,8 @@ def eval(args, env, model, stats, avgn=5, render=False):
 
     eval_reward /= avgn
     stats['eval_rewards'].append(eval_reward)
-    # sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
-    # sys.stdout.flush()
+    sys.stdout.write("\r\nEval reward: %f \r\n" % (eval_reward))
+    sys.stdout.flush()
     return eval_reward
 
 
@@ -286,6 +286,7 @@ def train(args, env, model, opt, opt_v, kf, stats, ep=0):
             if traj_reward > stats['max_reward']:
                 stats['max_reward'] = traj_reward
             stats['avg_reward'] = sum(stats['train_rewards'][-10:]) / len(stats['train_rewards'][-10:])
+            stats['total_trajs'] += 1
 
             if not args.no_kalman:
                 # compute GAE and update KF
@@ -417,6 +418,7 @@ def optimize(args):
     stats['max_reward'] = -np.inf
     stats['avg_reward'] = 0.0
     stats['total_samples'] = 0.0
+    stats['total_trajs'] = 0
 
     # zfilter = ZFilter(env.observation_space.shape)
 
@@ -454,7 +456,7 @@ def optimize(args):
         # input("")
 
         avg_eval = eval(args, env, model, stats)
-        log_writer.writerow([stats['total_samples'], stats['max_reward'], stats['avg_reward'], avg_eval])
+        log_writer.writerow([stats['total_samples'], stats['total_trajs'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
         # print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
