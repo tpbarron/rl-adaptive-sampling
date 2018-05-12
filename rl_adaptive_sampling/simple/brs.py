@@ -10,7 +10,8 @@ import models
 from rl_adaptive_sampling.opt import kalman_opt
 
 def optimize(args):
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"lr"+str(args.lr)+"error"+str(args.kf_error_thresh)+"nu"+str(args.nu))
+
+    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_nu"+str(args.nu))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -27,15 +28,16 @@ def optimize(args):
 
     f = funcs.make_func(args.func)
     model = models.SingleParameterModel(ndim=f.input_dimen)
-    kf = kalman_opt.KalmanFilter(state_dim=model.nparam)
+    kf = kalman_opt.KalmanFilter(state_dim=model.nparam, error_init=1.0, sos_init=1.0, reset_state=args.reset_kf_state)
+    kf.reset()
 
-    for itr in range(args.n_iters):
+    while sum(log_batch_sizes) < args.n_iters:
         if not args.no_kalman:
             kf.reset()
 
         log_grad_est.append(kf.xt)
         log_grad_true.append(0)
-        log_grad_obs.append(np.array([0]))
+        log_grad_obs.append(np.zeros_like(kf.xt))
         log_cov_error.append(kf.Pt)
         log_min_est.append(model.x.copy())
         log_abs_error_est.append(kf.e)
@@ -55,16 +57,17 @@ def optimize(args):
                 fz_minus = fz_minus + np.random.normal(size=model.x.shape)
                 fz_plus = fz_plus + np.random.normal(size=model.x.shape)
 
-            grad_est = (fz_plus - fz_minus) / args.nu
-            print (grad_est.shape, fz_plus.shape, fz_minus.shape)
+            grad_est = (fz_plus - fz_minus) * delta # / args.nu
+            # print (grad_est, grad_est/args.nu)
+            # input("")
             ys.append(grad_est)
 
             if not args.no_kalman:
-                # already know grad just modulate by objective
                 kf.update(grad_est)
+                # print ("Current error: ", np.mean(kf.e))
                 if np.mean(kf.e) < args.kf_error_thresh:
                     print ("Reached error: ", np.mean(kf.e))
-                    # print ("Nsamples: ", nsample)
+                    print ("Nsamples: ", nsample)
                     break
 
             # print ("grad est, true grad, observation: ", xt, f.jacobian(minimum), y)
@@ -79,12 +82,20 @@ def optimize(args):
 
         if args.no_kalman:
             gt = np.mean(np.array(ys), axis=0)
-            print (gt.shape)
-            input("g")
         else:
             gt = kf.xt
         model.x = model.x - args.lr * gt
         print ("Approximate minimum: ", model.x)
+        log_batch_sizes.append(nsample+1)
+
+    print ("total samples: ", sum(log_batch_sizes))
+
+    # print (log_grad_obs[0:10])
+    # for i in range(len(log_grad_obs)):
+    #     x = log_grad_obs[i]
+    #     print (i, x)
+    #     if x.shape != kf.xt.shape:
+    #         print (x.shape)
 
     np.save(os.path.join(args.log_dir, "log_min_est.npy"), np.array(log_min_est))
     np.save(os.path.join(args.log_dir, "log_grad_est.npy"), np.array(log_grad_est))

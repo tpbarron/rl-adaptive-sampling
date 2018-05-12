@@ -8,6 +8,8 @@ parser.add_argument('--batch-size', type=int, default=1000,
                     help='training batch size (default: 1000)')
 parser.add_argument('--max-samples', type=int, default=1e6,
                     help='maximum num steps to take (default: 1e6)')
+parser.add_argument('--layers', type=int, default=1,
+                    help='layers in value and policy approx (default: 1)')
 parser.add_argument('--gamma', type=float, default=0.99,
                     help='discount factor (default: 0.99)')
 parser.add_argument('--tau', type=float, default=0.97,

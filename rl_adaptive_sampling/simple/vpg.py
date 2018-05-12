@@ -32,7 +32,8 @@ def optimize(args):
     kf = kalman_opt.KalmanFilter(state_dim=model.nparam, use_diagonal_approx=args.use_diagonal_approx, use_last_error=args.use_last_error, sos_init=args.sos_init)
     opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.0)
 
-    for itr in range(args.n_iters):
+    num_samples = 0
+    while num_samples < args.max_samples:
         if not args.no_kalman:
             kf.reset()
         log_prob_obj_loss = 0
@@ -66,7 +67,7 @@ def optimize(args):
                 # input("")
                 kf.update(grad)
                 #print (nsample, np.mean(kf.e), np.mean(kf.Rt)) #, kf.e)
-                if nsample >= 10 and np.mean(kf.e) < args.kf_error_thresh:
+                if nsample >= 1 and np.mean(kf.e) < args.kf_error_thresh:
                     #print ("Reached error: ", np.mean(kf.e))
                     #print ("Nsamples: ", nsample)
                     break
@@ -86,14 +87,16 @@ def optimize(args):
             log_abs_error_true.append(0)
             log_obs_noise_est.append(kf.Rt)
 
-        log_batch_sizes.append(nsample)
+        log_batch_sizes.append(nsample + 1)
+        num_samples += nsample + 1
+
         opt.zero_grad()
         if args.no_kalman:
             (log_prob_obj_loss/args.batch_size).backward()
         else:
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
-        #print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
+        # print ("Approximate minimum: ", model.mu.data.numpy(), model.log_std.exp().data.numpy())
         if np.any(model.log_std.data.numpy() < np.log(args.min_std)):
             #print ("Setting min variance to ", args.min_std)
             for p in range(model.nparam//2):

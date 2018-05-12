@@ -87,8 +87,10 @@ class Rosenbrock(Function):
 def make_func(fname):
     if fname == 'parabola':
         return Parabola()
-    if fname == 'ndquad':
-        return NDQuadratic()
+    if fname == '2dquad':
+        return NDQuadratic(ndim=2)
+    if fname == '100dquad':
+        return NDQuadratic(ndim=100)
     if fname == 'rosen':
         return Rosenbrock()
     if fname =='quartic':
