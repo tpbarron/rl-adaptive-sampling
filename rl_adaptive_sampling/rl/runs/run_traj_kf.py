@@ -24,12 +24,12 @@ envs = ['CartPole-v0']
 
 max_samples = 100000
 log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR_NOKF)
-lrs = [0.005]
+lrs = [0.05]
 batch_sizes = [1000, 2500, 5000] #, 1000, 2500, 5000]
 pi_optim = ['adam'] # 'sgd']
 
 # errs = [0.0000005] #, 0.0005, 0.0001]
-errs = [0.00001, 0.000001, 0.0000005] #, 0.0005, 0.0001]
+errs = [0.001] #, 0.000001, 0.0000005] #, 0.0005, 0.0001]
 diagonal = [True]
 sos_init = [0.0]
 reset_state = [False] #, True]
@@ -45,32 +45,32 @@ nlayers = 2
 #  python vpg_traj_kf.py --batch-size 5000 --lr 0.01 --max-samples 100000 --env-name CartPole-v0 --pi-optim adam --layers 2 --seed 0 --sos-init 0.0 --kf-error-thresh 0.001 --reset-kf-state
 
 # print ("No kalman: ", len(seeds) * len(lrs) * len(batch_sizes))
-for seed in seeds:
-   for lr in lrs:
-       for bs in batch_sizes:
-           for piopt in pi_optim:
-               for e in envs:
-                   args = arguments.get_args()
-                   args.seed = seed
-                   args.env_name = e
-                   args.max_samples = max_samples
-                   args.batch_size = bs
-                   args.lr = lr
-                   args.log_dir = log_dir
-                   args.pi_optim = piopt
-
-                   # These are just defaults for no kalman
-                   args.no_kalman = True
-                   args.kf_error_thresh = 0.0
-                   args.use_diagonal_approx = False
-                   args.sos_init = 0.0
-                   args.reset_kf_state = False
-                   args.reset_obs_noise = False
-
-                   args.layers = nlayers
-
-                   pid = run_vpg_traj_variant.remote(args)
-                   gets.append(pid)
+# for seed in seeds:
+#    for lr in lrs:
+#        for bs in batch_sizes:
+#            for piopt in pi_optim:
+#                for e in envs:
+#                    args = arguments.get_args()
+#                    args.seed = seed
+#                    args.env_name = e
+#                    args.max_samples = max_samples
+#                    args.batch_size = bs
+#                    args.lr = lr
+#                    args.log_dir = log_dir
+#                    args.pi_optim = piopt
+#
+#                    # These are just defaults for no kalman
+#                    args.no_kalman = True
+#                    args.kf_error_thresh = 0.0
+#                    args.use_diagonal_approx = False
+#                    args.sos_init = 0.0
+#                    args.reset_kf_state = False
+#                    args.reset_obs_noise = False
+#
+#                    args.layers = nlayers
+#
+#                    pid = run_vpg_traj_variant.remote(args)
+#                    gets.append(pid)
 
 log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR_KF)
 

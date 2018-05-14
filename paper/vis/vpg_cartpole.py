@@ -10,7 +10,7 @@ plt.rc('ytick', labelsize='small')
 
 fig = plt.figure(figsize=(4, 3))
 
-path =  '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_13_18r7_kf'
+path =  '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_13_18r10_kf'
 # path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_7_18r1/'
 
 def sync_data(xs, ys):
@@ -31,64 +31,64 @@ def sync_data(xs, ys):
         ysnew.append(ynew)
     return xsnew[0], np.array(ysnew)
 
+# data_map = {}
+# title_map = {}
+# import os
+# for root, subdirs, files in os.walk(path):
+#     if not 'layers2' in root:
+#         continue
+#     if not "resetkfx0" in root:
+#         continue
+#     # if not "lr0.005" in root:
+#     #     continue
+#     if "log.csv" in files:
+#         # print (root, subdirs, files)
+#         # input("")
+#         key = root[:-2]
+#         if not key in data_map:
+#             data_map[key] = []
+#             title_map[key] = "KF" if "batch5000" in root else "PG" #key
+#             # title_map[key] += root[root.find("batch"): root.find("_", root.find("batch")+1)]
+#             title_map[key] += root[root.find("error"): root.find("_", root.find("error")+1)]
+#         data_map[key].append(os.path.join(root, "log.csv"))
+#
+# # print (data_map)
+# # input("")
+#
+# for k,v in data_map.items():
+#     xs = []
+#     ys = []
+#     print (len(v))
+#     for file in v:
+#         a = np.loadtxt(file, delimiter=',')
+#         print (a.shape)
+#         xs.append(a[:,0])
+#         ys.append(a[:,3])
+#
+#     xsnew, ysnew = sync_data(xs, ys)
+#     print ("Run data: ", xsnew.shape, ysnew.shape)
+#     ysnew = np.median(ysnew, axis=0)
+#     ysstd = np.std(ysnew, axis=0)
+#     print ("Run data: ", xsnew.shape, ysnew.shape)
+#     # mean = np.stack(run_data)
+#     # print (mean.shape)
+#     # mean = np.mean(mean, axis=1)
+#     # print (mean.shape)
+#     plt.plot(xsnew, ysnew, label=title_map[k])
+#     plt.fill_between(xsnew, ysnew-ysstd, ysnew+ysstd, alpha=0.1)
+#     # plt.fill_between(x, y, y-std, alpha=alpha, color=c)
+
+
+path =  '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_13_18r10_nokf'
 data_map = {}
 title_map = {}
-import os
 for root, subdirs, files in os.walk(path):
     if not 'layers2' in root:
         continue
-    if not "resetkfx0" in root:
-        continue
-    if not "lr0.005" in root:
-        continue
-    if "log.csv" in files:
-        # print (root, subdirs, files)
-        # input("")
-        key = root[:-2]
-        if not key in data_map:
-            data_map[key] = []
-            title_map[key] = "KF" if "batch5000" in root else "PG" #key
-            # title_map[key] += root[root.find("batch"): root.find("_", root.find("batch")+1)]
-            title_map[key] += root[root.find("error"): root.find("_", root.find("error")+1)]
-        data_map[key].append(os.path.join(root, "log.csv"))
-
-# print (data_map)
-# input("")
-
-for k,v in data_map.items():
-    xs = []
-    ys = []
-    print (len(v))
-    for file in v:
-        a = np.loadtxt(file, delimiter=',')
-        print (a.shape)
-        xs.append(a[:,0])
-        ys.append(a[:,3])
-
-    xsnew, ysnew = sync_data(xs, ys)
-    print ("Run data: ", xsnew.shape, ysnew.shape)
-    ysnew = np.median(ysnew, axis=0)
-    ysstd = np.std(ysnew, axis=0)
-    print ("Run data: ", xsnew.shape, ysnew.shape)
-    # mean = np.stack(run_data)
-    # print (mean.shape)
-    # mean = np.mean(mean, axis=1)
-    # print (mean.shape)
-    plt.plot(xsnew, ysnew, label=title_map[k])
-    plt.fill_between(xsnew, ysnew-ysstd, ysnew+ysstd, alpha=0.1)
-    # plt.fill_between(x, y, y-std, alpha=alpha, color=c)
-
-
-path =  '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_13_18r6_nokf'
-data_map = {}
-title_map = {}
-for root, subdirs, files in os.walk(path):
-    if not 'layers2' in root:
-        continue
-    if not "lr0.005" in root:
-        continue
-    if "batch1000_" in root:
-        continue
+    # if not "lr0.005" in root:
+    #     continue
+    # if "batch1000_" in root:
+    #     continue
     if "log.csv" in files:
         # print (root, subdirs, files)
         # input("")
@@ -125,7 +125,7 @@ for k,v in data_map.items():
 
 
 plt.ylim((0, 200))
-plt.xlim((0, 250000))
+plt.xlim((0, 100000))
 plt.legend()
 plt.show()
 # plt.savefig(fname='vpg_cartpole.pdf', format='pdf')

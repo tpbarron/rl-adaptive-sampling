@@ -491,11 +491,16 @@ def optimize(args):
     log_file.close()
 
 from envs.lqr_env import LQR_Env
+from envs.lqg_env import LQG_Env
 from gym.envs.registration import register
 
 register(
     id='LQR-v0',
     entry_point='envs.lqr_env:LQR_Env',
+)
+register(
+    id='LQG-v0',
+    entry_point='envs.lqg_env:LQG_Env',
 )
 
 if __name__ == '__main__':
