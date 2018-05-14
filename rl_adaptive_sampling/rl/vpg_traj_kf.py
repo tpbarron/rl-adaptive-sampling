@@ -61,8 +61,8 @@ class Policy(nn.Module):
             self.fc1 = nn.Linear(n_inputs, n_outputs)
             nn.init.xavier_normal_(self.fc1.weight.data)
         else:
-            self.fc1 = nn.Linear(n_inputs, 64)
-            self.fc2 = nn.Linear(64, n_outputs)
+            self.fc1 = nn.Linear(n_inputs, 32)
+            self.fc2 = nn.Linear(32, n_outputs)
             nn.init.xavier_normal_(self.fc1.weight.data)
             nn.init.xavier_normal_(self.fc2.weight.data)
 
@@ -87,8 +87,8 @@ class Value(nn.Module):
             self.fc1v = nn.Linear(n_inputs, 1)
             nn.init.xavier_normal_(self.fc1v.weight.data)
         else:
-            self.fc1v = nn.Linear(n_inputs, 64)
-            self.fc2v = nn.Linear(64, 1)
+            self.fc1v = nn.Linear(n_inputs, 32)
+            self.fc2v = nn.Linear(32, 1)
             nn.init.xavier_normal_(self.fc1v.weight.data)
             nn.init.xavier_normal_(self.fc2v.weight.data)
 
@@ -460,7 +460,7 @@ def optimize(args):
         log_writer.writerow([stats['total_samples'], stats['total_trajs'], stats['max_reward'], stats['avg_reward'], avg_eval])
         log_file.flush()
         e += 1
-        # print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
+        print ("total samples: ", stats['total_samples'], stats['total_samples']-last_iter_samples)
         last_ep_samples = stats['total_samples']-last_iter_samples
         last_iter_samples = stats['total_samples']
         if avg_eval > best_eval or last_save_step - stats['total_samples'] > 10000:
@@ -490,6 +490,13 @@ def optimize(args):
         # input("")
     log_file.close()
 
+from envs.lqr_env import LQR_Env
+from gym.envs.registration import register
+
+register(
+    id='LQR-v0',
+    entry_point='envs.lqr_env:LQR_Env',
+)
 
 if __name__ == '__main__':
     import arguments

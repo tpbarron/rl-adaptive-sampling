@@ -10,28 +10,28 @@ plt.rc('ytick', labelsize='small')
 
 fig = plt.figure(figsize=(4, 3))
 
-algo = 'brs'
+algo = 'vpg'
 #path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
 # path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
 # path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
-path = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_7_18r1/'
-path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_7_18r1/'
+path = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_13_18r1/'
+path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_13_18r1/'
 
-func = 'parabola'
+func = '2dquad'
 # func = 'ndquad'
 use_diagonal_approx = 1
-noisy_obj = 1
-seeds = list(range(1))
-lr = 0.05
+noisy_obj = 0
+seeds = list(range(5))
+lr = 0.01
 alpha = 0.2
 sos_init = 0.0
 nu = 0.5
-name = algo+'_'+func+'_sos'+str(sos_init)+'noisy'+str(noisy_obj)+'_1'
+name = algo+'_'+func+'_sos'+str(sos_init)+'noisy'+str(noisy_obj)+'_largebatch'
 
 # no kalman
-# bs = [250, 100] #, 50, 10]
-bs = [1, 10, 50]
-colors = ['xkcd:orange', 'xkcd:orange red', 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
+# bs = [50, 100] #, 50, 10]
+bs = [1, 2, 10] #, 100]
+colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ',']
 for b, c, m in zip(bs, colors, markers):
     # batch 1000
@@ -49,16 +49,17 @@ for b, c, m in zip(bs, colors, markers):
         x = batch_ends1
         y = mu_est1[batch_ends1]**2.0
         # y = np.reshape(1, y.shape[0])
+        # y = np.squeeze(y)
+        y = np.mean(y, axis=1)
         # print (y.shape)
-        y = np.squeeze(y)
-        # y = np.mean(y, axis=1)
+        # input("")
         xs.append(x)
         ys.append(y)
     xs = np.array(xs)
     ys = np.array(ys)
     x = np.mean(xs, axis=0)
     y = np.mean(ys, axis=0)
-    std = np.std(ys, axis=0)**2.0
+    std = np.std(ys, axis=0)
     plt.plot(x, y, label='PG '+str(b), color=c, marker=m, linestyle='dashed')
     plt.fill_between(x, y, y+std, alpha=alpha, color=c)
     plt.fill_between(x, y, y-std, alpha=alpha, color=c)
@@ -67,9 +68,9 @@ for b, c, m in zip(bs, colors, markers):
 # kalman
 # errs = [0.2, 0.1, 0.05, 0.01]
 # lr = 0.5
-# errs = [0.1, 0.2] #, 0.1]
-errs = [0.1, 0.2, 0.3]
-colors = ['xkcd:blue', 'xkcd:blue purple', 'xkcd:purple blue'] #, 'xkcd:cobalt blue'] #, '#7fbf7b', '#1b7837']
+errs = [0.4, 0.5, 0.75] #, 0.1]
+# errs = [0.1, 0.2, 0.3]
+colors = ['xkcd:jade', 'xkcd:aqua', 'xkcd:sea blue'] #, 'xkcd:cobalt blue'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ','] #, ',']
 
 def sync_data(xs, ys):
@@ -104,16 +105,16 @@ for e, c, m in zip(errs, colors, markers):
         x = batch_ends1-1
         print (batch_sizes1)
         print (batch_ends1)
-        y = mu_est1[x]**2.0
-        # y = np.mean(y, axis=1)
-        y = np.squeeze(y)
+        y = mu_est1[x]
+        y = np.mean(y, axis=1)**2.0
+        # y = np.squeeze(y)
         xs.append(x)
         ys.append(y)
     # convert xs, ys to same length
     xsnew, ysnew = sync_data(xs, ys)
     print (ysnew.shape)
     y = np.mean(ysnew, axis=0)
-    ystd = np.std(ysnew, axis=0)**2.0
+    ystd = np.std(ysnew, axis=0)
 
     # from scipy.interpolate import spline
     # xnew = np.linspace(xsnew.min(), xsnew.max(), 10)
@@ -126,9 +127,9 @@ for e, c, m in zip(errs, colors, markers):
 plt.xlabel("Samples")
 plt.ylabel("Squared Error")
 
-if func == 'parabola':
-    # plt.xlim((0, 3000))
-    plt.xlim((0, 1000))
+if func == '2dquad':
+    plt.xlim((0, 3000))
+    # plt.xlim((0, 1500))
 elif func == 'ndquad':
     plt.xlim((0, 10000))
 plt.ylim((0, 1.0))

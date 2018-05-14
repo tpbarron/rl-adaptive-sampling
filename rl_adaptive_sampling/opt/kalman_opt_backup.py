@@ -39,11 +39,6 @@ class KalmanFilter(object):
         # total steps; used for variance and running mean
         self.steps = 0
 
-        # windowed mean / var
-        self.window_size = 100
-        self.window_index = 0
-        self.window_buffer = np.empty((self.window_size, self.state_dim, 1))
-
     def reset(self):
         # set expected error
         if self.use_last_error and self.xt is not None:
@@ -81,7 +76,6 @@ class KalmanFilter(object):
         self.n = 0
         self.do_step = False
         self.xt_old = np.copy(self.xt)
-        # self.xt = np.zeros((self.state_dim, 1))
 
     def compute_running_cov(self, y):
         """
@@ -107,42 +101,15 @@ class KalmanFilter(object):
         self.steps += 1
 
         if self.use_diagonal_approx:
-            mean_past = self.mean.copy()
-            if self.steps <= self.window_size:
-                # print ("Not enough samples for window yet")
-                # no subtraction necessary
-                self.mean = self.mean + (y - self.mean) / self.steps # = self.n
-                self.sos = self.sos + (y - mean_past) * (y - self.mean)
-                # add to buffer
-                self.window_buffer[self.window_index] = y.copy()
-                # print (self.steps, self.window_index)
-            else:
-                # print ("Using windowed update")
-                # remove old sample
-                # https://stackoverflow.com/questions/5147378/rolling-variance-algorithm
-                # new_mean = mean + (x_new - xs[next_index])/window_size;
-                # varSum = var_sum + (x_new - mean) * (x_new - new_mean) - (xs[next_index] - mean) * (xs[next_index] - new_mean);
-
-                last_index = (self.window_index+1) % self.window_size
-                yold = self.window_buffer[last_index]
-                self.mean  = self.mean + y / self.window_size - yold / self.window_size
-                self.sos = self.sos + (y - mean_past) * (y - self.mean) - (yold - mean_past) * (yold - self.mean)
-                # overwrite the oldest element
-                self.window_buffer[last_index] = y
-
-            self.window_index += 1
-            self.window_index %= self.window_size
-
+            mean_past = self.mean
+            #print ("mean past: ", mean_past.shape)
+            self.mean = self.mean + (y - self.mean) / self.n
+            self.sos = self.sos + (y - mean_past) * (y - self.mean)
             #print ("m, sos: ", self.mean.shape, self.sos.shape)
             if self.steps > 1:
-                if self.steps <= self.window_size:
-                    var = self.sos / self.steps
-                    # print ("No window var: ", var, self.mean)
-                else:
-                    var = self.sos / self.window_size
-                    # print ("Window var: ", var, self.mean)
-                # print ("var: ", var)
-                # input("")
+                var = self.sos / (self.n-1)
+                #print ("var: ", var.shape)
+                #input("")
                 self.Rt = var # leave as vector, makes for easier inversion of diag matrix
         else:
             # import time

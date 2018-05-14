@@ -42,8 +42,8 @@ def optimize(args):
         log_grad_true.append(0)
         log_grad_obs.append(np.zeros_like(kf.xt))
         log_cov_error.append(kf.Pt)
-        log_min_mu_est.append(model.mu.data.numpy())
-        log_min_std_est.append(model.log_std.exp().data.numpy())
+        log_min_mu_est.append(model.mu.data.numpy().copy())
+        log_min_std_est.append(model.log_std.exp().data.numpy().copy())
         log_abs_error_est.append(kf.e)
         log_abs_error_true.append(0) #np.max(np.abs(xt - f.jacobian(minimum))))
         log_obs_noise_est.append(kf.Rt)
@@ -68,8 +68,8 @@ def optimize(args):
                 kf.update(grad)
                 #print (nsample, np.mean(kf.e), np.mean(kf.Rt)) #, kf.e)
                 if nsample >= 1 and np.mean(kf.e) < args.kf_error_thresh:
-                    #print ("Reached error: ", np.mean(kf.e))
-                    #print ("Nsamples: ", nsample)
+                    # print ("Reached error: ", np.mean(kf.e))
+                    # print ("Nsamples: ", nsample)
                     break
                 # if nsample >= 100 and np.linalg.norm(kf.e)**2.0/kf.state_dim < args.kf_error_thresh:
                 #     print ("Reached error: ", np.linalg.norm(kf.e)**2.0/kf.state_dim) #, kf.e.shape)

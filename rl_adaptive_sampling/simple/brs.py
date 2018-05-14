@@ -31,7 +31,8 @@ def optimize(args):
     kf = kalman_opt.KalmanFilter(state_dim=model.nparam, error_init=1.0, sos_init=1.0, reset_state=args.reset_kf_state)
     kf.reset()
 
-    while sum(log_batch_sizes) < args.n_iters:
+    num_samples = 0
+    while num_samples < args.max_samples:
         if not args.no_kalman:
             kf.reset()
 
@@ -87,6 +88,7 @@ def optimize(args):
         model.x = model.x - args.lr * gt
         print ("Approximate minimum: ", model.x)
         log_batch_sizes.append(nsample+1)
+        num_samples += nsample+1
 
     print ("total samples: ", sum(log_batch_sizes))
 
