@@ -11,7 +11,7 @@ from rl_adaptive_sampling.opt import kalman_opt
 
 def optimize(args):
 
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_nu"+str(args.nu))
+    args.log_dir = os.path.join(args.log_dir, "brs_batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init)+"_nu"+str(args.nu))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -72,7 +72,11 @@ def optimize(args):
                     break
 
             # print ("grad est, true grad, observation: ", xt, f.jacobian(minimum), y)
-            log_grad_est.append(kf.xt)
+            if args.no_kalman:
+                gest = np.mean(np.array(ys), axis=0).copy()
+                log_grad_est.append(gest)
+            else:
+                log_grad_est.append(kf.xt)
             log_grad_true.append(0)
             log_grad_obs.append(grad_est)
             log_cov_error.append(kf.Pt)

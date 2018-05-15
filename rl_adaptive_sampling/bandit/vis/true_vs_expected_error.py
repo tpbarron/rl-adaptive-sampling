@@ -8,7 +8,7 @@ plt.rc('font', family='serif')
 plt.rc('xtick', labelsize='small')
 plt.rc('ytick', labelsize='small')
 
-fig = plt.figure(figsize=(4, 3))
+# fig = plt.figure(figsize=(4, 3))
 
 path = '/home/trevor/Documents/dev/ml/rl/rl-adaptive-sampling/rl_adaptive_sampling/bandit/data/batch1000_lr0.1_error0.025_noisyobj0_fparabola_diag1_sos0.0/1/'
 
@@ -20,7 +20,7 @@ grad_errs = np.load(os.path.join(path, 'log_abs_error_est.npy'))
 
 colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
 
-f, (axes) = plt.subplots(1, 5, figsize=(12, 3))
+f, (axes) = plt.subplots(1, 5, sharey=True, figsize=(12, 3))
 lims = [(-10, 10), (-10, 10), (-5, 5), (-5, 5), (-5, 5), (-5, 5), (-5, 5), (-5, 5)]
 print (axes)
 for batch in range(axes.size):
