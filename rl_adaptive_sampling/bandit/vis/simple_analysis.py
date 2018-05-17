@@ -11,13 +11,14 @@ plt.rc('ytick', labelsize='small')
 fig = plt.figure(figsize=(4, 3))
 
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/bandit/5_17_18r1/'
-path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_17_18r11/'
-path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_17_18r11/'
+path1 = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/'
+path2 = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/'
+# path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_17_18r11/'
 
 func = 'parabola'
 use_diagonal_approx = 1
 noisy_obj = 0
-seeds = list(range(5))
+seeds = list(range(10))
 lr = 0.01
 alpha = 0.2
 sos_init = 0.0
@@ -26,7 +27,8 @@ name = 'f'+func
 # no kalman
 # bs = [500, 1000] #, 50, 10]
 # bs = [1, 2, 10]
-bs = [50, 100] #, 100]
+# bs = [100, 250, 500, 1000]
+bs = [2, 10, 50] #, 100] #, 100]
 colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ',']
 for b, c, m in zip(bs, colors, markers):
@@ -61,7 +63,7 @@ for b, c, m in zip(bs, colors, markers):
     # plt.errorbar(x, y, yerr=std, color=c)
 
 # kalman
-# errs = [0.4, 0.5, 0.75]
+errs = [0.4, 0.5, 0.75]
 lr = 0.01
 errs = [0.1, 0.2, 0.3]
 colors = ['xkcd:jade', 'xkcd:aqua', 'xkcd:sea blue'] #, 'xkcd:cobalt blue'] #, '#7fbf7b', '#1b7837']
@@ -88,7 +90,7 @@ for e, c, m in zip(errs, colors, markers):
     ys = []
     for s in seeds:
 
-        bpath = os.path.join(path2, 'kf1_noisyobj0_fparabola_maxsamples5000_batch1000_lr'+str(lr)+'_error'+str(e)+'_diag'+str(use_diagonal_approx))+'_sos0.0'
+        bpath = os.path.join(path2, 'kf1_noisyobj0_fparabola_maxsamples5000_batch5000_lr'+str(lr)+'_error'+str(e)+'_diag'+str(use_diagonal_approx))+'_sos0.0'
         bpath = os.path.join(bpath, str(s))
         batch_sizes1 = np.load(os.path.join(bpath, 'log_batch_sizes.npy'))
         mu_est1 = np.load(os.path.join(bpath, 'log_min_mu_est.npy'))
@@ -120,7 +122,8 @@ for e, c, m in zip(errs, colors, markers):
 plt.xlabel("Samples")
 plt.ylabel("Squared Error")
 
-plt.xlim((0, 1000))
+plt.xlim((0, 500))
+# plt.xlim((0, 1000))
 
 
 # if func == '2dquad':
