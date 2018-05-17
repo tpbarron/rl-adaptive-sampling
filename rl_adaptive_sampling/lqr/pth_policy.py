@@ -13,7 +13,7 @@ class LinearPolicy(nn.Module):
         self.input_dim = input_dim
         self.action_dim = action_dim
         self.lin = nn.Linear(input_dim, action_dim, bias=False)
-        self.std = np.ones((action_dim,)) * 0.1
+        self.std = np.ones((action_dim,)) * 0.5
 
     def num_params(self):
         return self.input_dim * self.action_dim

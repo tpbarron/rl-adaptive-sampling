@@ -31,7 +31,7 @@ parser.add_argument('--reset-obs-noise', action='store_true', default=False,
 
 parser.add_argument('--x0', type=float, default=0.5,
                     help='x position (default: 0.5)')
-parser.add_argument('--y0', type=float, default=0.0,
+parser.add_argument('--y0', type=float, default=0.5,
                     help='y position (default: 0.0)')
 parser.add_argument('--xv0', type=float, default=0.0,
                     help='vel x (default: 0.0)')

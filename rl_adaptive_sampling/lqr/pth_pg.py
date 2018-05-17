@@ -108,7 +108,8 @@ def optimize(args):
                       use_diagonal_approx=args.use_diagonal_approx,
                       sos_init=args.sos_init,
                       reset_observation_noise=args.reset_obs_noise,
-                      reset_state=args.reset_kf_state)
+                      reset_state=args.reset_kf_state,
+                      window_size=20)
     kf.reset()
 
     print ("Random episodes")
@@ -152,7 +153,7 @@ def optimize(args):
             batch_grads.append(grad_obs)
             log_grad_obs.append(grad_obs)
 
-            if current_batch_samples > args.batch_size:
+            if current_batch_samples >= args.batch_size:
                 opt.zero_grad()
                 compute_rollout_grad(args, tgrads)
                 opt.step()
