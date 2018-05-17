@@ -7,14 +7,14 @@ import ray
 import vpg
 import brs
 
-RUN_VPG = False
-RUN_BRS = True
+RUN_VPG = True
+RUN_BRS = False
 
 BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
 # BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
 #BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
 
-VPG_LOG_DIR = "vpg/5_13_18r1/"
+VPG_LOG_DIR = "vpg/5_17_18r2.0/"
 BRS_LOG_DIR = "brs/5_13_18r1/"
 
 ray.init(num_cpus=3)
@@ -28,17 +28,17 @@ def run_brs_variant(args):
     brs.optimize(args)
 
 gets = []
-seeds = list(range(5))
+seeds = list(range(10))
 
 if RUN_VPG:
     log_dir = os.path.join(BASE_LOG_DIR, VPG_LOG_DIR)
     lrs = [0.01] #, 0.05]
-    batch_sizes = [1, 2, 10, 50, 100] #250, 500, 1000]
-    funcs = ['2dquad']#, 'ndquad']
+    batch_sizes = [1, 2, 10, 50, 100, 250, 500, 1000]
+    funcs = ['parabola']#, 'ndquad']
 
     errs = [0.75, 0.5, 0.4, 0.3, 0.2, 0.1]
-    noisy_obj = [False, True] #, True]
-    diagonal = [True]
+    noisy_obj = [False]#, True] #, True]
+    diagonal = [True, False]
     sos_init = [0.0] #, 0.01, 0.1, 1.0, 5.0, 10.0, 25.0, 100.0]
 
     print ("Running variants: ", len(seeds) * len(lrs) * len(noisy_obj) * len(funcs) * len(batch_sizes))
@@ -72,7 +72,7 @@ if RUN_VPG:
                             for sos in sos_init:
                                 args = arguments.get_args()
                                 args.max_samples = 5000
-                                args.batch_size = 1000
+                                args.batch_size = 5000
                                 args.seed = seed
                                 args.lr = lr
                                 args.kf_error_thresh = err

@@ -23,8 +23,11 @@ def integral_func(x, model, f):
     return ss.norm.pdf(x, loc=model.mu, scale=model.std) * grad_log_normal_pdf(x, model.mu, model.std)[0,:] * f.f(x)
 
 def optimize(args):
-
-    args.log_dir = os.path.join(args.log_dir, "batch"+str(args.batch_size)+"_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+"_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init))
+    args.log_dir = os.path.join(args.log_dir, "kf"+str(int(not args.no_kalman))+\
+        "_noisyobj"+str(int(args.noisy_objective))+"_f"+args.func+\
+        "_maxsamples"+str(args.max_samples)+"_batch"+str(args.batch_size)+\
+        "_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+\
+        "_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init))
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
@@ -117,8 +120,8 @@ def optimize(args):
 
         model.mu = model.mu - args.lr * gt[0]
         # don't update std
-        print ("Approximate minimum: ", model.mu, model.std)
-        print ("True grad: ", true_grad)
+        # print ("Approximate minimum: ", model.mu, model.std)
+        # print ("True grad: ", true_grad)
 
     np.save(os.path.join(args.log_dir, "log_min_mu_est.npy"), np.array(log_min_mu_est))
     np.save(os.path.join(args.log_dir, "log_min_std_est.npy"), np.array(log_min_std_est))

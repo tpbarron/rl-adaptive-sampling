@@ -10,27 +10,23 @@ plt.rc('ytick', labelsize='small')
 
 fig = plt.figure(figsize=(4, 3))
 
-algo = 'vpg'
-#path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_6_18r3/'
-# path = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
-# path2 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/vpg/5_7_18r3/'
-path = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_13_18r1/'
-path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/'+algo+'/5_13_18r1/'
+# path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/bandit/5_17_18r1/'
+path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_17_18r11/'
+path2 = '/home/trevor/Documents/data/rl_adaptive_sampling/vpg/5_17_18r11/'
 
-func = '2dquad'
-# func = 'ndquad'
+func = 'parabola'
 use_diagonal_approx = 1
 noisy_obj = 0
 seeds = list(range(5))
 lr = 0.01
 alpha = 0.2
 sos_init = 0.0
-nu = 0.5
-name = algo+'_'+func+'_sos'+str(sos_init)+'noisy'+str(noisy_obj)+'_largebatch'
+name = 'f'+func
 
 # no kalman
-# bs = [50, 100] #, 50, 10]
-bs = [1, 2, 10] #, 100]
+# bs = [500, 1000] #, 50, 10]
+# bs = [1, 2, 10]
+bs = [50, 100] #, 100]
 colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ',']
 for b, c, m in zip(bs, colors, markers):
@@ -38,12 +34,11 @@ for b, c, m in zip(bs, colors, markers):
     xs = []
     ys = []
     for s in seeds:
-        if algo == 'brs':
-            batch_sizes1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj'+str(noisy_obj)+'_f'+func+'_diag0_sos0.0_nu'+str(nu)+'/'+str(s)+'/log_batch_sizes.npy')
-            mu_est1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj'+str(noisy_obj)+'_f'+func+'_diag0_sos0.0_nu'+str(nu)+'/'+str(s)+'/log_min_est.npy')
-        else:
-            batch_sizes1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj'+str(noisy_obj)+'_f'+func+'_diag0_sos0.0/'+str(s)+'/log_batch_sizes.npy')
-            mu_est1 = np.load(path+'batch'+str(b)+'_lr'+str(lr)+'_error0.0_noisyobj'+str(noisy_obj)+'_f'+func+'_diag0_sos0.0/'+str(s)+'/log_min_mu_est.npy')
+        bpath = os.path.join(path1, 'kf0_noisyobj0_fparabola_maxsamples5000_batch'+str(b)+'_lr'+str(lr)+'_error0.0_diag0_sos0.0')
+        bpath = os.path.join(bpath, str(s))
+        batch_sizes1 = np.load(os.path.join(bpath, 'log_batch_sizes.npy'))
+        mu_est1 = np.load(os.path.join(bpath, 'log_min_mu_est.npy'))
+
         batch_ends1 = np.cumsum(batch_sizes1)
         # print (batch_ends1)
         x = batch_ends1
@@ -61,15 +56,14 @@ for b, c, m in zip(bs, colors, markers):
     y = np.mean(ys, axis=0)
     std = np.std(ys, axis=0)
     plt.plot(x, y, label='PG '+str(b), color=c, marker=m, linestyle='dashed')
-    plt.fill_between(x, y, y+std, alpha=alpha, color=c)
-    plt.fill_between(x, y, y-std, alpha=alpha, color=c)
+    # if bs != 2:
+    plt.fill_between(x, y-std, y+std, alpha=alpha, color=c)
     # plt.errorbar(x, y, yerr=std, color=c)
 
 # kalman
-# errs = [0.2, 0.1, 0.05, 0.01]
-lr = 0.05
-errs = [0.4, 0.5]#, 0.75] #, 0.1]
-# errs = [0.1, 0.2, 0.3]
+# errs = [0.4, 0.5, 0.75]
+lr = 0.01
+errs = [0.1, 0.2, 0.3]
 colors = ['xkcd:jade', 'xkcd:aqua', 'xkcd:sea blue'] #, 'xkcd:cobalt blue'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ','] #, ',']
 
@@ -92,14 +86,13 @@ def sync_data(xs, ys):
 for e, c, m in zip(errs, colors, markers):
     xs = []
     ys = []
-    for seed in seeds:
-        if algo == 'brs':
-            batch_sizes1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj'+str(noisy_obj)+'_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'_nu'+str(nu)+'/'+str(seed)+'/log_batch_sizes.npy')
-            mu_est1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj'+str(noisy_obj)+'_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'_nu'+str(nu)+'/'+str(seed)+'/log_min_est.npy')
-            batch_ends1 = np.cumsum(batch_sizes1)
-        else:
-            batch_sizes1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj'+str(noisy_obj)+'_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/'+str(seed)+'/log_batch_sizes.npy')
-            mu_est1 = np.load(path2+'batch1000_lr'+str(lr)+'_error'+str(e)+'_noisyobj'+str(noisy_obj)+'_f'+func+'_diag'+str(use_diagonal_approx)+'_sos'+str(sos_init)+'/'+str(seed)+'/log_min_mu_est.npy')
+    for s in seeds:
+
+        bpath = os.path.join(path2, 'kf1_noisyobj0_fparabola_maxsamples5000_batch1000_lr'+str(lr)+'_error'+str(e)+'_diag'+str(use_diagonal_approx))+'_sos0.0'
+        bpath = os.path.join(bpath, str(s))
+        batch_sizes1 = np.load(os.path.join(bpath, 'log_batch_sizes.npy'))
+        mu_est1 = np.load(os.path.join(bpath, 'log_min_mu_est.npy'))
+
         batch_ends1 = np.cumsum(batch_sizes1)
         # batch_ends1 = np.concatenate((np.array([0]), batch_ends1))
         x = batch_ends1-1
@@ -127,11 +120,14 @@ for e, c, m in zip(errs, colors, markers):
 plt.xlabel("Samples")
 plt.ylabel("Squared Error")
 
-if func == '2dquad':
-    plt.xlim((0, 500))
-    # plt.xlim((0, 1500))
-elif func == 'ndquad':
-    plt.xlim((0, 10000))
+plt.xlim((0, 1000))
+
+
+# if func == '2dquad':
+#     plt.xlim((0, 3000))
+#     plt.xlim((0, 1500))
+# elif func == 'ndquad':
+#     plt.xlim((0, 10000))
 plt.ylim((0, 1.0))
 
 plt.legend(prop={'size': 8})

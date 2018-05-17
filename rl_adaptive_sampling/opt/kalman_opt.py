@@ -11,7 +11,8 @@ class KalmanFilter(object):
                  sos_init=10.0,
                  error_init=1.0,
                  reset_observation_noise=False,
-                 reset_state=False):
+                 reset_state=False,
+                 window_size=20):
         self.state_dim = state_dim
         self.use_last_error = use_last_error
         self.min_error_init = min_error_init
@@ -40,7 +41,7 @@ class KalmanFilter(object):
         self.steps = 0
 
         # windowed mean / var
-        self.window_size = 100
+        self.window_size = window_size
         self.window_index = 0
         self.window_buffer = np.empty((self.window_size, self.state_dim, 1))
 

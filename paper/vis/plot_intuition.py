@@ -1,12 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import scipy.stats as ss
+
+sns.set()
+sns.set_style("white")
+sns.set_context("paper")
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
-plt.rc('xtick', labelsize='x-small')
-plt.rc('ytick', labelsize='x-small')
-
+# plt.rc('xtick', labelsize='x-small')
+# plt.rc('ytick', labelsize='x-small')
 fig = plt.figure(figsize=(4, 3))
 
 x = np.linspace(-6, 6, 1000)
@@ -29,5 +33,7 @@ plt.yticks(np.arange(0, 2, step=0.5))
 
 plt.legend(loc="upper left")
 plt.tight_layout()
+# sns.despine()
+
 # plt.show()
 plt.savefig(fname='intuition.pdf', format='pdf')

@@ -32,6 +32,8 @@ parser.add_argument('--reset-kf-state', action='store_true', default=False,
                     help='reset kf state to 0 at each iter (default: false)')
 parser.add_argument('--reset-obs-noise', action='store_true', default=False,
                     help='reset obs noise in kf at each iter (default: false)')
+parser.add_argument('--kf-window-size', type=int, default=100,
+                    help='variance window size (default: 100)')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 args = parser.parse_args()

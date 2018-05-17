@@ -22,6 +22,8 @@ class Parabola(Function):
         super(Parabola, self).__init__(input_dimen=1, output_dimen=1)
 
     def f(self, x):
+        if isinstance(x, float):
+            x = np.array([x])
         assert x.size == self.input_dimen
         y = x**2.0
         return y
