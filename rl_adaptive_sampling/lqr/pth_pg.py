@@ -89,8 +89,9 @@ def execute_kf_grad_step(model, kf):
 def optimize(args):
     args.log_dir = os.path.join(args.log_dir, "envlqr"+"_kf"+str(int(not args.no_kalman))+\
         "_maxsamples"+str(args.max_samples)+"_batch"+str(args.batch_size)+\
-        "_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)\
-        +"_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init))
+        "_lr"+str(args.lr)+"_error"+str(args.kf_error_thresh)+\
+        "_diag"+str(int(args.use_diagonal_approx))+"_sos"+str(args.sos_init))+\
+        "_state"+str(args.x0)+"_"+str(args.y0)+"_"+str(args.xv0)+"_"+str(args.yv0)
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
