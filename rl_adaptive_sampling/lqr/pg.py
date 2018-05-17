@@ -28,8 +28,8 @@ def compute_rollout_grad(rewards, glogps):
     # compute coefs
     g = np.zeros_like(glogps[0])
     rewards = np.array(rewards)
-    rewards /= np.std(rewards) + 1e-8
-    rewards -= np.mean(rewards)
+    # rewards /= np.std(rewards) + 1e-8
+    # rewards -= np.mean(rewards)
     r = 0.0
     for i in reversed(range(len(rewards))):
         r = rewards[i] + gamma * r
@@ -63,7 +63,7 @@ def optimize(args):
         tgrads.append(grad)
         last_rewards.append(sum(rewards))
 
-        if (i+1)%100 == 0:
+        if (i+1)%20 == 0:
             g = np.stack(tgrads)
             g = np.mean(g, axis=0)
             pi.apply(g)

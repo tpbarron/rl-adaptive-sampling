@@ -21,47 +21,47 @@ def dlqr(A,B,Q,R):
     eigVals, eigVecs = scipy.linalg.eig(A-B*K)
     return K, X, eigVals
 
-class LQG_Env(gym.Env):
+class LinearizedCartPole(gym.Env):
 
-    def __init__(self, state0=np.array([0.5, 0.5, 0.0, 0.0])):
+    def __init__(self):
 
         self.viewer = None
 
-        self.dt = 0.05
-        self.m = 1
+        self.dt = 0.01 #1.0/60.0
+        self.nu = 13.2
+        self.g = 9.8
 
-        self.A =  np.array([[1.0, 0.0, self.dt, 0.0],
-                            [0.0, 1.0, 0.0, self.dt],
-                            [0., 0.0, 1.0, 0.0],
-                            [0., 0.0, 0.0, 1.0]])
-        self.B = np.zeros((4, 2))
-        self.B[2,0] = self.dt / self.m
-        self.B[3,1] = self.dt / self.m
+        self.mu0 = 0.0
+        self.var0 = 0.1
+        self.vart = 0.01 * self.var0
+
+        self.A =  np.array([[1.0, self.dt, 0.0,               0.0],
+                            [0.0, 1.0,     0.0,               0.0],
+                            [0.0, 0.0,     1.0,               self.dt],
+                            [0.0, 0.0,     self.nu * self.dt, 1.0]])
+        self.B = np.zeros((4, 1))
+        self.B[1] = self.dt
+        self.B[3] = self.nu * self.dt / self.g
 
         self.d, self.p = self.B.shape
 
-        self.q = 1.0
-        self.r = 0.01
+        self.q = np.array([1.25, 1.0, 12.0, 0.25])
         self.Q = np.eye(self.d) * self.q
+        print (self.Q)
+
+        self.r = 0.01
         self.R = np.eye(self.p) * self.r
 
         self.K,S,E = dlqr(self.A, self.B, self.Q, self.R)
         self.K = np.asarray(self.K)
         # print (self.K)
         # input("")
-        self.mu0 = state0 #np.array([0.5, 0.5, 0.0, 0.0])
-        self.var0 = 0.0001
 
-        self.time = 0
         self.T = 100
+        self.time = 0
 
         self.action_space = spaces.Box(low=-1e+8, high=1e+8, shape=(self.p,))
         self.observation_space = spaces.Box(low=-float('inf'), high=float('inf'), shape=(self.d, ))
-
-        pygame.init()
-        self.screen_w = 200
-        self.screen_h = 200
-        self.screen = None
 
         self._seed()
 
@@ -77,21 +77,23 @@ class LQG_Env(gym.Env):
             u = -np.dot(self.K, self.state)
         x = self.state
         cost = np.dot(x, np.dot(self.Q, x)) + np.dot(u, np.dot(self.R, u))
-        new_x = np.dot(self.A, x) + np.dot(self.B, u) + self.np_random.normal(0, self.var0, size=self.d)
+        new_x = np.dot(self.A, x) + np.dot(self.B, u) + self.np_random.normal(0, self.vart, size=self.d)
         self.state = new_x
 
         terminated = False
-        self.time += 1
-        if self.time >= self.T:
+        if np.abs(x[2]) >= np.pi/6.0 or self.time > self.T:
             terminated = True
+
+        self.time += 1
 
         return self._get_obs(), cost, terminated, {}
 
+
     def reset(self):
         self.state = self.np_random.normal(self.mu0, self.var0, size = self.d)
-        self.last_u = None
         self.time = 0
         return self._get_obs()
+
 
     def get_pixels_from_state(self):
         x,y = self.state[0:2]
@@ -105,22 +107,7 @@ class LQG_Env(gym.Env):
         return int(round(px)), int(round(py))
 
     def render(self):
-        if self.screen is None:
-            self.screen = pygame.display.set_mode((self.screen_w, self.screen_h))
-            pygame.display.set_caption('LQR')
-
-        # Fill background
-        background = pygame.Surface(self.screen.get_size())
-        background = background.convert()
-        background.fill((250, 250, 250))
-        self.screen.blit(background, (0, 0))
-
-        px, py = self.get_pixels_from_state()
-        pygame.draw.circle(self.screen, (255,0,0), (px, py), 2)
-
-        pygame.display.flip()
-        pygame.display.update()
-
+        return None
 
     def _get_obs(self):
         return  self.state

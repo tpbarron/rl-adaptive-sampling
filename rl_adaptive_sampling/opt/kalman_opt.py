@@ -72,6 +72,7 @@ class KalmanFilter(object):
             self.sos = np.zeros((self.state_dim, 1))
             # initializing this high, gives conservative init
             self.sos.fill(self.sos_init)
+            self.steps = 0
 
         # set xt on first step
         if self.reset_state or self.xt is None:
@@ -111,7 +112,7 @@ class KalmanFilter(object):
             if self.steps <= self.window_size:
                 # print ("Not enough samples for window yet")
                 # no subtraction necessary
-                self.mean = self.mean + (y - self.mean) / self.steps # = self.n
+                self.mean = self.mean + (y - self.mean) / self.steps
                 self.sos = self.sos + (y - mean_past) * (y - self.mean)
                 # add to buffer
                 self.window_buffer[self.window_index] = y.copy()
@@ -126,7 +127,8 @@ class KalmanFilter(object):
                 last_index = (self.window_index+1) % self.window_size
                 yold = self.window_buffer[last_index]
                 self.mean  = self.mean + y / self.window_size - yold / self.window_size
-                self.sos = self.sos + (y - mean_past) * (y - self.mean) - (yold - mean_past) * (yold - self.mean)
+                self.sos = self.sos + (y + yold - mean_past - self.mean) * (y - yold)
+                # self.sos = self.sos + (y - mean_past) * (y - self.mean) - (yold - mean_past) * (yold - self.mean)
                 # overwrite the oldest element
                 self.window_buffer[last_index] = y
 
@@ -136,10 +138,10 @@ class KalmanFilter(object):
             #print ("m, sos: ", self.mean.shape, self.sos.shape)
             if self.steps > 1:
                 if self.steps <= self.window_size:
-                    var = self.sos / self.steps
+                    var = self.sos / self.steps #(self.steps-1)
                     # print ("No window var: ", var, self.mean)
                 else:
-                    var = self.sos / self.window_size
+                    var = self.sos / self.steps #(self.window_size-1)
                     # print ("Window var: ", var, self.mean)
                 # print ("var: ", var)
                 # input("")
@@ -147,9 +149,48 @@ class KalmanFilter(object):
         else:
             # import time
             # start = time.time()
-            self.compute_running_cov(y)
+            # self.compute_running_cov(y)
             # end = time.time()
             # print ("Time for cov update: ", (e-s))
+
+            mean_past = self.mean.copy()
+            if self.steps <= self.window_size:
+                # print ("Not enough samples for window yet")
+                # no subtraction necessary
+                self.mean = self.mean + (y - self.mean) / self.steps
+                self.sos = self.sos + np.dot((y - mean_past), np.transpose((y - self.mean)))
+                # add to buffer
+                self.window_buffer[self.window_index] = y.copy()
+                # print (self.steps, self.window_index)
+            else:
+                # print ("Using windowed update")
+                # remove old sample
+                # https://stackoverflow.com/questions/5147378/rolling-variance-algorithm
+                # new_mean = mean + (x_new - xs[next_index])/window_size;
+                # varSum = var_sum + (x_new - mean) * (x_new - new_mean) - (xs[next_index] - mean) * (xs[next_index] - new_mean);
+
+                last_index = (self.window_index+1) % self.window_size
+                yold = self.window_buffer[last_index]
+                self.mean  = self.mean + y / self.window_size - yold / self.window_size
+                # self.sos = self.sos + (y + yold - mean_past - self.mean) * (y - yold)
+                self.sos = self.sos + np.dot((y - mean_past), np.transpose((y - self.mean))) - np.dot((yold - mean_past), np.transpose((yold - self.mean)))
+                # overwrite the oldest element
+                self.window_buffer[last_index] = y
+
+            self.window_index += 1
+            self.window_index %= self.window_size
+
+            #print ("m, sos: ", self.mean.shape, self.sos.shape)
+            if self.steps > 1:
+                if self.steps <= self.window_size:
+                    var = self.sos / self.steps #(self.steps-1)
+                    # print ("No window var: ", var, self.mean)
+                else:
+                    var = self.sos / self.steps #(self.window_size-1)
+                    # print ("Window var: ", var, self.mean)
+                # print ("var: ", var)
+                # input("")
+                self.Rt = var
 
         Et = y - self.xt
 
@@ -163,7 +204,10 @@ class KalmanFilter(object):
             Kt = self.Pt * 1.0/(self.Pt + self.Rt + 1e-8)
             self.Pt = (self.ones - Kt) * self.Pt
             self.xt = self.xt + Kt * Et
+
+            # print ("pre error: ", self.e)
             self.e = (self.ones - Kt) * self.e
+            # print ("post error: ", self.e, Kt, self.Pt, self.Rt)
             self.Kt = Kt
             # print (Kt, self.xt)
             # print (Et)
@@ -185,7 +229,8 @@ class KalmanFilter(object):
             # start = time.time()
             # print (self.Pt)
             # print (self.Rt)
-            Kt = self.Pt @ linalg.inv(self.Pt + self.Rt + 1e-8)
+            # Kt = self.Pt @ linalg.inv(self.Pt + self.Rt + 1e-8)
+            Kt = self.Pt @ np.linalg.pinv(self.Pt + self.Rt + 1e-8)
             self.Pt = (self.I - Kt) @ self.Pt
             self.xt = self.xt + Kt @ Et
             self.e = (self.I - Kt) @ self.e
