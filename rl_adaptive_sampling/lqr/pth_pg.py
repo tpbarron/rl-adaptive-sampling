@@ -48,7 +48,7 @@ def eval_pi(env, pi, avg_n=10):
 def compute_rollout_grad(args, tgrads, retain=False):
     # TODO: Fix V(s)
     # TODO: Compute GAE baseline
-    # TODO: 
+    # TODO:
     loss = 0.0
     total_len = 0
     for rewards, logps in tgrads:
@@ -63,15 +63,15 @@ def compute_rollout_grad(args, tgrads, retain=False):
 
         discounted = list(reversed(discounted))
         discounted = np.array(discounted)
-        # discounted /= np.std(discounted) + 1e-8
+        discounted = (discounted - np.mean(discounted)) / (np.std(discounted) + 1e-8)
         # print (discounted)
         # input("")
         for i in range(len(discounted)):
             loss += logps[i] * Variable(torch.FloatTensor([discounted[i]]))
         total_len += len(rewards)
         # input("")
-    # loss = -loss / total_len
-    loss = loss / total_len
+    loss = -loss / total_len
+    # loss = loss / total_len
     loss.backward(retain_graph=retain)
 
 
@@ -98,10 +98,10 @@ def optimize(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
+    # env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
     # K = env.K
-    # env = cp.CartPoleContinuousEnv()
+    env = cp.CartPoleContinuousEnv()
     pi = pth_policy.LinearPolicy(env.observation_space.shape[0], env.action_space.shape[0])
     # pi.lin.weight.data = torch.from_numpy(-K+np.random.normal(scale=3, size=K.shape)).float()
     opt = optim.Adam(pi.parameters(), lr=args.lr)
