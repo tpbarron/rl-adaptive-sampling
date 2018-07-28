@@ -6,9 +6,9 @@ import ray
 import pth_pg
 
 # BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
-# BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
-BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
-LQR_LOG_DIR = "lqr/5_17_18r1/"
+BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
+# BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
+LQR_LOG_DIR = "lqr/7_27_18r0.1/"
 
 ray.init(num_cpus=2)
 
@@ -17,7 +17,7 @@ def run_lqr_variant(args):
     pth_pg.optimize(args)
 
 gets = []
-seeds = list(range(1))
+seeds = list(range(10))
 
 log_dir = os.path.join(BASE_LOG_DIR, LQR_LOG_DIR)
 
@@ -33,7 +33,7 @@ for seed in seeds:
    for bs in batch_sizes:
        for pos in positions:
            args = arguments.get_args()
-           args.max_samples = 5000
+           args.max_samples = 500000
            args.batch_size = bs
            args.seed = seed
            args.lr = 0.005
@@ -53,7 +53,7 @@ for seed in seeds:
         for diag in diagonal:
             for pos in positions:
                 args = arguments.get_args()
-                args.max_samples = 5000
+                args.max_samples = 500000
                 args.batch_size = 10000
                 args.seed = seed
                 args.lr = 0.005

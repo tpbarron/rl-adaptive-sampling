@@ -14,9 +14,6 @@ from torch.autograd import Variable
 
 from rl_adaptive_sampling.opt.kalman_opt import KalmanFilter
 
-np.random.seed(3)
-torch.manual_seed(3)
-
 def do_rollout(env, pi, optimal=False, eval=False, render=False):
     done = False
     obs = env.reset()
@@ -31,7 +28,7 @@ def do_rollout(env, pi, optimal=False, eval=False, render=False):
         # print ("Action: ", act.data.numpy(), obs)
         act = np.squeeze(act.data.numpy())
         act = np.clip(act, env.action_space.low, env.action_space.high)
-        obs, rew, done, info = env.step(act, use_k=optimal)
+        obs, rew, done, info = env.step(act) #, use_k=optimal)
         rewards.append(rew)
         logps.append(logp)
         states.append(obs)
@@ -49,6 +46,9 @@ def eval_pi(env, pi, avg_n=10):
     return avg
 
 def compute_rollout_grad(args, tgrads, retain=False):
+    # TODO: Fix V(s)
+    # TODO: Compute GAE baseline
+    # TODO: 
     loss = 0.0
     total_len = 0
     for rewards, logps in tgrads:
@@ -70,6 +70,7 @@ def compute_rollout_grad(args, tgrads, retain=False):
             loss += logps[i] * Variable(torch.FloatTensor([discounted[i]]))
         total_len += len(rewards)
         # input("")
+    # loss = -loss / total_len
     loss = loss / total_len
     loss.backward(retain_graph=retain)
 
@@ -95,10 +96,11 @@ def optimize(args):
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
     env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
-    K = env.K
+    # K = env.K
     # env = cp.CartPoleContinuousEnv()
     pi = pth_policy.LinearPolicy(env.observation_space.shape[0], env.action_space.shape[0])
     # pi.lin.weight.data = torch.from_numpy(-K+np.random.normal(scale=3, size=K.shape)).float()
@@ -116,7 +118,8 @@ def optimize(args):
     rewards, _, _ = do_rollout(env, pi, eval=True)
     print ("Episode return: ", sum(rewards))
     rewards, _, _ = do_rollout(env, pi, optimal=True, eval=True)
-    print ("Optimal return over horizon", env.T,":", sum(rewards))
+    # print ("Optimal return over horizon", env.T,":", sum(rewards))
+    print ("Optimal return over horizon:", sum(rewards))
 
     tgrads = []
     current_batch_samples = 0

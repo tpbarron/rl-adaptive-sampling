@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import normal
 from torch.autograd import Variable
+# import torch.nn.init as init
 
 class LinearPolicy(nn.Module):
 
@@ -13,6 +14,8 @@ class LinearPolicy(nn.Module):
         self.input_dim = input_dim
         self.action_dim = action_dim
         self.lin = nn.Linear(input_dim, action_dim, bias=False)
+        # nn.init.xavier_normal_(self.lin.weight.data)
+
         self.std = np.ones((action_dim,)) * 0.5
 
     def num_params(self):
