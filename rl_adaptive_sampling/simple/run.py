@@ -10,14 +10,14 @@ import brs
 RUN_VPG = True
 RUN_BRS = False
 
-BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
+# BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/"
 # BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
-#BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
+BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/"
 
-VPG_LOG_DIR = "vpg/5_17_18r2.0/"
+VPG_LOG_DIR = "vpg/5_17_18r0.1/"
 BRS_LOG_DIR = "brs/5_13_18r1/"
 
-ray.init(num_cpus=3)
+ray.init() #num_cpus=3)
 
 @ray.remote
 def run_vpg_variant(args):

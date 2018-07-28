@@ -13,9 +13,7 @@ plt.rc('ytick', labelsize='small')
 
 # fig = plt.figure(figsize=(4, 3))
 
-path = '/run/media/trevor/01CA-028A/nips_kalman/5_17_18r0.1/kf1_noisyobj0_fparabola_maxsamples5000_batch5000_lr0.01_error0.1_diag0_sos0.0/2/'
-# path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/kf1_noisyobj0_fparabola_maxsamples5000_batch5000_lr0.01_error0.1_diag1_sos0.0/0/'
-
+path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/kf1_noisyobj0_fparabola_maxsamples5000_batch5000_lr0.01_error0.1_diag1_sos0.0/0/'
 # path = '/home/trevor/Documents/dev/ml/rl/rl-adaptive-sampling/rl_adaptive_sampling/bandit/data/batch1000_lr0.1_error0.025_noisyobj0_fparabola_diag1_sos0.0/1/'
 
 grad_trues = np.load(os.path.join(path, 'log_grad_true.npy'))
@@ -55,5 +53,6 @@ plt.legend(loc="upper left", bbox_to_anchor=(1,1))
 # axes[2].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=1,  borderaxespad=0, frameon=False)
 f.subplots_adjust(wspace=0, hspace=0)
 f.tight_layout()
-# plt.show()
-plt.savefig(fname='bandit_errors.pdf', format='pdf')
+plt.show()
+
+# plt.savefig(fname='errors.pdf', format='pdf')

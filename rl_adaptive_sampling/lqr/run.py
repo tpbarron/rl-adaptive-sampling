@@ -10,21 +10,21 @@ BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/
 # BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
 LQR_LOG_DIR = "lqr/7_27_18r0.1/"
 
-ray.init(num_cpus=2)
+ray.init() #num_cpus=2)
 
 @ray.remote
 def run_lqr_variant(args):
     pth_pg.optimize(args)
 
 gets = []
-seeds = list(range(10))
+seeds = list(range(50, 100))
 
 log_dir = os.path.join(BASE_LOG_DIR, LQR_LOG_DIR)
 
-diagonal = [True, False]
+diagonal = [True] #, False]
 errs = [0.1, 0.2, 0.3, 0.4, 0.5]
 batch_sizes = [100, 500, 1000, 5000]
-positions = [[0.5, 0.5, 0.0, 0.0], [0.5, 0.5, 0.1, -0.1]]
+positions = [[0.5, 0.5, 0.0, 0.0], [0.5, 0.5, 0.1, -0.1], [0.5, 0.5, -0.25, 0.5]]
 # "--x0 0.5 --y0 0.5"
 # "--x0 0.5 --y0 0.5 --xv0 0.1 --yv0 -0.1"
 

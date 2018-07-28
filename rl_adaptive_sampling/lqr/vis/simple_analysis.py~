@@ -26,15 +26,15 @@ path2 = path1
 # path1 = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/'
 # path2 = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/'
 
-#states = ["state0.5_0.5_0.0_0.0", "state0.5_0.5_0.1_-0.1"
+#states = ["state0.5_0.5_0.0_0.0", "state0.5_0.5_0.1_-0.1" 
 
 use_diagonal_approx = 1
 seeds = list(range(50, 100))
 maxsamples = 500000
 lr = 0.005
 #state = "state0.5_0.5_0.0_0.0"
-#state = "state0.5_0.5_0.1_-0.1"
-state = "state0.5_0.5_-0.25_0.5"
+state = "state0.5_0.5_0.1_-0.1"
+#state = "state0.5_0.5_-0.25_0.5"
 
 alpha = 0.2
 sos_init = 0.0
@@ -162,10 +162,10 @@ plt.xlim((0, 5000))
 #     plt.xlim((0, 1500))
 # elif func == 'ndquad':
 #     plt.xlim((0, 10000))
-plt.ylim((12, 50.0))
+plt.ylim((12, 30.0))
 
 plt.legend(prop={'size': 8})
 plt.tight_layout()
 
 #plt.show()
-plt.savefig(fname='lqr_perf_s2.pdf', format='pdf')
+plt.savefig(fname='lqr_perf_s1.pdf', format='pdf')
