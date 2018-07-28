@@ -14,9 +14,6 @@ from torch.autograd import Variable
 
 from rl_adaptive_sampling.opt.kalman_opt import KalmanFilter
 
-np.random.seed(3)
-torch.manual_seed(3)
-
 def do_rollout(env, pi, optimal=False, eval=False, render=False):
     done = False
     obs = env.reset()
@@ -95,6 +92,7 @@ def optimize(args):
     args.log_dir = os.path.join(args.log_dir, str(args.seed))
     os.makedirs(args.log_dir, exist_ok=True)
     np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
     env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
