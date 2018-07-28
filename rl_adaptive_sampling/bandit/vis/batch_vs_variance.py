@@ -10,7 +10,8 @@ plt.rc('ytick', labelsize='small')
 
 # fig = plt.figure(figsize=(4, 3))
 
-path = '/home/trevor/Documents/dev/ml/rl/rl-adaptive-sampling/rl_adaptive_sampling/bandit/data/batch1000_lr0.1_error0.025_noisyobj0_fparabola_diag1_sos0.0/1/'
+path = '/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/vpg/5_17_18r0.1/kf1_noisyobj0_fparabola_maxsamples5000_batch5000_lr0.01_error0.1_diag1_sos0.0/0/'
+# path = '/home/trevor/Documents/dev/ml/rl/rl-adaptive-sampling/rl_adaptive_sampling/bandit/data/batch1000_lr0.1_error0.025_noisyobj0_fparabola_diag1_sos0.0/1/'
 
 obs_noise = np.load(os.path.join(path, 'log_obs_noise_est.npy'))
 batches = np.load(os.path.join(path, 'log_batch_sizes.npy'))
@@ -35,8 +36,8 @@ ax2.set_ylabel('variance')
 plt.xlim((0, 25))
 fig.legend()
 fig.tight_layout()
-# plt.show()
-plt.savefig(fname='batch_var.pdf', format='pdf')
+plt.show()
+# plt.savefig(fname='batch_var.pdf', format='pdf')
 
 # f, (axes) = plt.subplots(1, 5, figsize=(12, 3))
 # lims = [(-10, 10), (-10, 10), (-5, 5), (-5, 5), (-5, 5), (-5, 5), (-5, 5), (-5, 5)]
