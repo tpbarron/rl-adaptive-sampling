@@ -1,0 +1,5 @@
+python pth_pg.py --batch-size 1000 --lr 0.001 --kf-error-thresh 0.001 --use-diagonal-approx --reset-obs-noise --sos-init 1.0 --no-kalman
+python pth_pg.py --batch-size 1000 --lr 0.001 --kf-error-thresh 0.001 --use-diagonal-approx --reset-obs-noise --sos-init 1.0
+
+
+python pth_pg.py --batch-size 10000 --gamma 0.99 --lr 0.01 --kf-error-thresh 0.4 --use-diagonal-approx --max-samples 250000 --log-dir data/

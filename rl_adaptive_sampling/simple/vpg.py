@@ -63,7 +63,7 @@ def optimize(args):
 
         log_grad_est.append(kf.xt)
         log_grad_true.append(np.array(true_grad))
-        log_grad_obs.append(np.zeros_like(kf.xt))
+        log_grad_obs.append(np.zeros((model.nparam, 1)))#(model.flattened_grad().numpy()))
         log_cov_error.append(kf.Pt)
         log_min_mu_est.append(model.mu.data.numpy().copy())
         # log_min_std_est.append(model.log_std.exp().data.numpy().copy())
@@ -87,7 +87,7 @@ def optimize(args):
                 log_prob_obj_loss += log_prob_obj
                 opt.zero_grad()
                 (log_prob_obj_loss/(nsample+1)).backward(retain_graph=True)
-                gest = model.mu.grad.data.numpy().copy()
+                grad = model.flattened_grad().numpy().copy() #.mu.grad.data.numpy().copy()
             else:
                 opt.zero_grad()
                 log_prob_obj.backward()
@@ -116,7 +116,6 @@ def optimize(args):
             log_abs_error_true.append(0)
             log_obs_noise_est.append(kf.Rt)
 
-
         true_grad = quad(integral_func, -np.inf, np.inf, args=(model, f))
         log_grad_true.append(np.array(true_grad))
 
@@ -129,7 +128,7 @@ def optimize(args):
         else:
             model.unflatten_grad(torch.from_numpy(kf.xt).float())
         opt.step()
-        # print ("Approximate minimum: ", model.mu.data.numpy()) #, model.log_std.exp().data.numpy())
+        print ("Approximate minimum: ", model.mu.data.numpy()) #, model.log_std.exp().data.numpy())
         # if np.any(model.log_std.data.numpy() < np.log(args.min_std)):
         #     #print ("Setting min variance to ", args.min_std)
         #     for p in range(model.nparam//2):

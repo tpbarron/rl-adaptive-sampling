@@ -25,6 +25,8 @@ class CartPoleContinuousEnv(gym.Env):
         self.polemass_length = (self.masspole * self.length)
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
+        self.horizon = 200 # max episode length is 5000
+        self.t = 0 # current num steps
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
@@ -52,6 +54,7 @@ class CartPoleContinuousEnv(gym.Env):
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
+        self.t += 1
         state = self.state
         x, x_dot, theta, theta_dot = state
         force = action * self.force_mag #self.force_mag if action==1 else -self.force_mag
@@ -68,7 +71,8 @@ class CartPoleContinuousEnv(gym.Env):
         done =  x < -self.x_threshold \
                 or x > self.x_threshold \
                 or theta < -self.theta_threshold_radians \
-                or theta > self.theta_threshold_radians
+                or theta > self.theta_threshold_radians \
+                or self.t >= self.horizon
         done = bool(done)
 
         if not done:
@@ -88,6 +92,7 @@ class CartPoleContinuousEnv(gym.Env):
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
+        self.t = 0
         return np.array(self.state)
 
     def render(self, mode='human'):

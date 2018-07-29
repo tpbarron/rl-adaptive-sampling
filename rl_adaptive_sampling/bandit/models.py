@@ -10,7 +10,7 @@ class GaussianModel(object):
         self.log_std0 = log_std0
         self.mu = np.empty((self.ndim,))
         self.mu.fill(mu0)
-        self.std = np.ones((self.ndim,)) * 0.1
+        self.std = np.ones((self.ndim,)) * 0.5
         self.nparam = ndim # 2 * ndim # mean only
 
     def sample(self):

@@ -13,7 +13,7 @@ class GaussianModel(nn.Module):
         self.log_std0 = log_std0
         self.mu = nn.Parameter(torch.FloatTensor(ndim).fill_(mu0))
         # self.log_std = nn.Parameter(torch.FloatTensor(ndim).fill_(log_std0))
-        self.std = np.ones((ndim,)) * 0.5
+        self.std = np.ones((ndim,)) * 0.1
         self.nparam = ndim # 2 * ndim
 
     def unflatten_grad(self, grad):

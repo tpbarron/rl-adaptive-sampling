@@ -120,7 +120,7 @@ def optimize(args):
 
         model.mu = model.mu - args.lr * gt[0]
         # don't update std
-        # print ("Approximate minimum: ", model.mu, model.std)
+        print ("Approximate minimum: ", model.mu, model.std)
         # print ("True grad: ", true_grad)
 
     np.save(os.path.join(args.log_dir, "log_min_mu_est.npy"), np.array(log_min_mu_est))

@@ -23,7 +23,7 @@ envCartPole-v0_max_samples50000_batch5000_lr0.05_pioptadam_error0.2_diag1_sos1.0
 (py36) [trevor@focus rl]$ python vpg_traj_kf.py --batch-size 5000 --lr 0.01 --max-samples 100000 --env-name CartPole-v0 --pi-optim adam --layers 2 --seed 3 --sos-init 0.0 --kf-error-thresh 0.001
 
 
-# Rebuttle todo:
+# Rebuttal todo:
 
 ## Main reviewer concerns:
   * Complexity:
@@ -50,8 +50,6 @@ envCartPole-v0_max_samples50000_batch5000_lr0.05_pioptadam_error0.2_diag1_sos1.0
     * Optimal baseline (incorporate into my code)
     * Linear value fn w/GAE (incorporate into my code)
     * Linear model with RBF.
-    * NPG w/ GAE (linear) (use arvind mjrl)
-    * TRPO w/ GAE (linear) (use arvind mjrl)
     * Try once with SGD so see if worth it.
   * Tasks:
     * CartPole
@@ -60,22 +58,22 @@ envCartPole-v0_max_samples50000_batch5000_lr0.05_pioptadam_error0.2_diag1_sos1.0
     * Wall time.
 
   * Exps (R: means algo code is ready, RR: means alg is ready and run script is prepared.)
+    0) Bandit
+      - R: (KF/VPG)
     1) PointMass
       - R: (KF/VPG) Linear policy no baseline SGD
       - R: (KF/VPG) Linear policy no baseline Adam
-      - (KF/VPG) Linear policy with linear critic GAE
+      - R: (KF/VPG) Linear policy with linear critic GAE
       - R: VPG (bs 1, 5, 10)
-      - NPG with GAE
-      - TRPO with GAE
+      - R: AAC (bs 1, 5, 10)
     2) CartPoleContinuous
       - R: (KF/VPG) Linear policy no baseline SGD
       - R: (KF/VPG) Linear policy no baseline Adam
-      - (KF/VPG) Linear policy with linear critic GAE
+      - R: (KF/VPG) Linear policy with linear critic GAE
       - R: VPG (bs 1, 5, 10)
-      - NPG with GAE
-      - TRPO with GAE
+      - X: NPG with GAE
+      - X: TRPO with GAE
+      - R: AAC (bs 1, 5, 10)
     2) Swimmer / Hopper / Walker / Ant
       - Run on best KF variant from CartPole
-      - VPG (bs 1, 5, 10)
-      - NPG with GAE
-      - TRPO with GAE
+      - AAC (bs 1, 5, 10)
