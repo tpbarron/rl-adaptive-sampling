@@ -23,7 +23,8 @@ fig = plt.figure(figsize=(4, 3))
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.1/'
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.2_lr0.01_parameterized_baseline/'
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.3_lr0.01_zero_baseline/'
-path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/'
+# path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/'
+path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/'
 path2 = path1
 
 #path1 = '/run/media/trevor/01CA-028A/nips_kalman/lqr/5_17_18r0.1/'
@@ -57,7 +58,7 @@ lr = 0.005
 #state = "state0.5_0.5_0.0_0.0"
 #state = "state0.5_0.5_0.1_-0.1"
 state = "state0.5_0.5_-0.25_0.5"
-k_best = 9
+k_best = 5
 
 alpha = 0.2
 sos_init = 0.0
@@ -65,9 +66,10 @@ sos_init = 0.0
 name = 'cp_test'
 
 # no kalman
-bs = [1, 2, 5] #, 5000]
+bs = [1, 5, 10] #, 5000]
 
-colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
+colors = ['black', 'black', 'black']
+# colors = ['xkcd:coral', 'xkcd:tangerine', 'xkcd:scarlet'] #, 'xkcd:red orange'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ',']
 for b, c, m in zip(bs, colors, markers):
     print ("Batch; ", b)
@@ -103,7 +105,7 @@ for b, c, m in zip(bs, colors, markers):
     ysnew = ysnew[idx[:k_best]]
     # input("ysnew")
 
-    y = np.median(ysnew, axis=0)
+    y = np.mean(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -111,6 +113,7 @@ for b, c, m in zip(bs, colors, markers):
     # xnew = np.linspace(xsnew.min(), xsnew.max(), 10)
     # ysmooth = spline(xsnew, y, xnew)
     # plt.plot(xnew, ysmooth, label='PG-KF '+str(e), color=c, linestyle='dashed', marker=m)
+
     plt.plot(xsnew, y, label='PG '+str(b), color=c, marker=m, linestyle='dashed', linewidth=0.5)
     plt.fill_between(xsnew, np.maximum(np.zeros_like(y), y-ystd), y+ystd, alpha=alpha, color=c)
 
@@ -139,7 +142,8 @@ for b, c, m in zip(bs, colors, markers):
 
 # kalman
 # errs = [0.4, 0.5]
-errs = [0.1, 0.2, 0.3]
+# errs = [0.001, 0.01, 0.1]
+errs = [0.1, 0.2, 0.3] #, 0.3]
 colors = ['xkcd:jade', 'xkcd:aqua', 'xkcd:sea blue'] #, 'xkcd:cobalt blue'] #, '#7fbf7b', '#1b7837']
 markers = [',', ',', ','] #, ',']
 
@@ -173,7 +177,7 @@ for e, c, m in zip(errs, colors, markers):
     print (np.mean(ysmin[idx[:k_best]]))
     ysnew = ysnew[idx[:k_best]]
 
-    y = np.median(ysnew, axis=0)
+    y = np.mean(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -181,6 +185,7 @@ for e, c, m in zip(errs, colors, markers):
     # xnew = np.linspace(xsnew.min(), xsnew.max(), 10)
     # ysmooth = spline(xsnew, y, xnew)
     # plt.plot(xnew, ysmooth, label='PG-KF '+str(e), color=c, linestyle='dashed', marker=m)
+
     plt.plot(xsnew, y, label='PG-KF '+str(e), color=c, marker=m, linewidth=0.5)
     plt.fill_between(xsnew, np.maximum(np.zeros_like(y), y-ystd), y+ystd, alpha=alpha, color=c)
 

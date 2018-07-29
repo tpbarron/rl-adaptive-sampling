@@ -8,7 +8,7 @@ import train
 BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/"
 # BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
 # BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
-LQR_LOG_DIR = "cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/"
+LQR_LOG_DIR = "cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/"
 
 ray.init(num_cpus=3)
 
