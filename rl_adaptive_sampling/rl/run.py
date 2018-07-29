@@ -8,7 +8,7 @@ import train
 BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/"
 # BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
 # BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
-LQR_LOG_DIR = "cartpole/7_28_18r0.3_lr0.01_zero_baseline/"
+LQR_LOG_DIR = "cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/"
 
 ray.init(num_cpus=3)
 
@@ -23,10 +23,10 @@ log_dir = os.path.join(BASE_LOG_DIR, LQR_LOG_DIR)
 print ("BASE_LOG_DIR: ", log_dir)
 
 diagonal = [True] #, False]
-errs = [0.1, 0.2, 0.3, 0.4, 0.5]
+errs = [0.001, 0.01, 0.1, 0.2, 0.3]
 # batch_sizes = [100, 500, 1000, 5000]
 batch_sizes_traj = [1, 2, 5, 10]
-max_samples = 50000
+max_samples = 30000
 lr = 0.01
 # positions = [[0.5, 0.5, 0.0, 0.0], [0.5, 0.5, 0.1, -0.1], [0.5, 0.5, -0.25, 0.5]]
 # "--x0 0.5 --y0 0.5"

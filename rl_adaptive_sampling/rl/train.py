@@ -11,7 +11,7 @@ import envs.linearized_cartpole as lcp
 
 from rl_adaptive_sampling.rl.policies.linear_policy import LinearPolicy
 from rl_adaptive_sampling.rl.baselines.zero_baseline import ZeroBaseline
-from rl_adaptive_sampling.rl.baselines.linear_baseline import LinearBaselineParameterized, LinearBaselineKernelRegression
+from rl_adaptive_sampling.rl.baselines.linear_baseline import LinearBaselineParameterized, LinearBaselineKernelRegression, LinearPolynomialKernelBaseline
 from rl_adaptive_sampling.rl.filters.kalman_opt import KalmanFilter
 from rl_adaptive_sampling.rl import pg
 from rl_adaptive_sampling.rl.utils import simple_sampler, eval
@@ -54,7 +54,8 @@ def train(args):
     opt = optim.Adam(pi.parameters(), lr=args.lr)
     # opt = optim.SGD(pi.parameters(), lr=args.lr, momentum=0.9)
 
-    baseline = LinearBaselineKernelRegression(env)
+    baseline = LinearPolynomialKernelBaseline(env)
+    # baseline = LinearBaselineKernelRegression(env)
     # baseline = LinearBaselineParameterized(env)
     # baseline = ZeroBaseline(env)
 

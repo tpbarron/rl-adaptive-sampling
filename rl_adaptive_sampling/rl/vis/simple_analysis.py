@@ -22,7 +22,8 @@ fig = plt.figure(figsize=(4, 3))
 
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.1/'
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.2_lr0.01_parameterized_baseline/'
-path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.3_lr0.01_zero_baseline/'
+# path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.3_lr0.01_zero_baseline/'
+path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/'
 path2 = path1
 
 #path1 = '/run/media/trevor/01CA-028A/nips_kalman/lqr/5_17_18r0.1/'
@@ -102,7 +103,7 @@ for b, c, m in zip(bs, colors, markers):
     ysnew = ysnew[idx[:k_best]]
     # input("ysnew")
 
-    y = np.mean(ysnew, axis=0)
+    y = np.median(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -172,7 +173,7 @@ for e, c, m in zip(errs, colors, markers):
     print (np.mean(ysmin[idx[:k_best]]))
     ysnew = ysnew[idx[:k_best]]
 
-    y = np.mean(ysnew, axis=0)
+    y = np.median(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -187,7 +188,7 @@ for e, c, m in zip(errs, colors, markers):
 plt.xlabel("Samples")
 plt.ylabel("Policy Reward")
 
-plt.xlim((0, 50000))
+plt.xlim((0, 30000))
 # plt.xlim((0, 50))
 
 
@@ -202,5 +203,5 @@ plt.ylim((50.0, 200.0))
 plt.legend(prop={'size': 8})
 plt.tight_layout()
 
-# plt.show()
-plt.savefig(fname='cartpole.pdf', format='pdf')
+plt.show()
+# plt.savefig(fname='cartpole.pdf', format='pdf')

@@ -17,15 +17,20 @@ def compute_rollout_grad(args, tgrads, baseline, retain=False):
         # discounted = []
         advantages = []
         r = 0.0
+        v_next = 0.0 # last value is zero since terminal and operating over trajectories
+        gae = 0.0
         for i in reversed(range(len(rewards))):
             r = rewards[i] + args.gamma * r
-            # TODO: compute GAE
+            empirical_state_value.append((states[i], r))
             # Compute A(s) = Q(s, a) - V(s)
             # Q(s, a) is empirical return. V(s) is approximation
-            empirical_state_value.append((states[i], r))
-            advantage = r - baseline.predict(states[i])
-            advantages.append(advantage)
-            # discounted.append(r)
+            # Generalized Advantage Estimataion
+            v_predict = baseline.predict(states[i])
+            delta_t = rewards[i] + args.gamma * v_next - v_predict
+            gae = gae * args.gamma * args.tau + delta_t
+            v_next = v_predict
+            # advantage = r - v_predict
+            advantages.append(gae)
 
         advantages = list(reversed(advantages))
         advantages = np.array(advantages)

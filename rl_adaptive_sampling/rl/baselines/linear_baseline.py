@@ -56,3 +56,52 @@ class LinearBaselineParameterized(nn.Module):
         pred = self.forward(Variable(torch.from_numpy(state).float())).detach().numpy()
         # print (pred)
         return pred
+
+
+class LinearPolynomialKernelBaseline:
+    def __init__(self, env, reg_coeff=1e-5):
+        n = env.observation_space.shape[0]  # number of states
+        self._reg_coeff = reg_coeff
+        self._coeffs = None
+
+    def _features(self, obs):
+        # compute regression features for the path
+        o = np.clip(obs, -10, 10)
+        if o.ndim > 2:
+            o = o.reshape(o.shape[0], -1)
+        l = len(obs)
+        al = np.arange(l) / 1000.0
+        # print (o.shape, al.shape, l)
+        feat = np.concatenate([o, al, al**2, al**3, np.ones((l,))])
+        # print ("feat: ", feat.shape)
+        return feat
+
+    def fit(self, empirical_state_value):
+        states, values = zip(*empirical_state_value)
+
+        # print (len(states), len(values), states[0].shape, len(states[0]))
+        # featmat = np.concatenate([self._features(path) for path in paths])
+        featmat = np.stack([self._features(state) for state in states])
+        # states = np.stack(states)
+        returns = np.array(values)
+        # print ("featmat: ", featmat.shape, returns.shape)
+
+        reg_coeff = copy.deepcopy(self._reg_coeff)
+        for _ in range(10):
+            self._coeffs = np.linalg.lstsq(
+                featmat.T.dot(featmat) + reg_coeff * np.identity(featmat.shape[1]),
+                featmat.T.dot(returns)
+            )[0]
+            if not np.any(np.isnan(self._coeffs)):
+                break
+            reg_coeff *= 10
+        # print ("Reg coef: ", self._coeffs)
+        # input("")
+
+
+    def predict(self, state):
+        if self._coeffs is None:
+            return 0.0
+        val = self._features(state).dot(self._coeffs)
+        # print ("pred: ", val)
+        return val

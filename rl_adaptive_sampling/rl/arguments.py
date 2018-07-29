@@ -12,6 +12,8 @@ parser.add_argument('--max-samples', type=int, default=1e6,
                     help='maximum num steps to take (default: 1e6)')
 parser.add_argument('--gamma', type=float, default=0.99,
                     help='discount factor (default: 0.99)')
+parser.add_argument('--tau', type=float, default=0.97,
+                    help='GAE param (default: 0.97)')
 parser.add_argument('--kf-error-thresh', type=float, default=0.0,
                     help='threshold for update expected error (default: 0.0)')
 parser.add_argument('--sos-init', type=float, default=0.0,
