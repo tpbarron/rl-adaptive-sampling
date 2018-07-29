@@ -24,7 +24,8 @@ fig = plt.figure(figsize=(4, 3))
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.2_lr0.01_parameterized_baseline/'
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.3_lr0.01_zero_baseline/'
 # path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_28_18r0.4_lr0.01_polynomial_baseline/'
-path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/'
+# path1 = '/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/'
+path1 = '/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/rebuttal/cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/'
 path2 = path1
 
 #path1 = '/run/media/trevor/01CA-028A/nips_kalman/lqr/5_17_18r0.1/'
@@ -52,13 +53,13 @@ def sync_data(xs, ys):
     return xsnew[0], np.array(ysnew)
 
 use_diagonal_approx = 1
-seeds = list(range(10)) #list(range(50, 100))
+seeds = list(range(10, 60)) #list(range(50, 100))
 maxsamples = 500000
 lr = 0.005
 #state = "state0.5_0.5_0.0_0.0"
 #state = "state0.5_0.5_0.1_-0.1"
 state = "state0.5_0.5_-0.25_0.5"
-k_best = 5
+k_best = 25
 
 alpha = 0.2
 sos_init = 0.0
@@ -105,7 +106,7 @@ for b, c, m in zip(bs, colors, markers):
     ysnew = ysnew[idx[:k_best]]
     # input("ysnew")
 
-    y = np.mean(ysnew, axis=0)
+    y = np.median(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -114,7 +115,7 @@ for b, c, m in zip(bs, colors, markers):
     # ysmooth = spline(xsnew, y, xnew)
     # plt.plot(xnew, ysmooth, label='PG-KF '+str(e), color=c, linestyle='dashed', marker=m)
 
-    plt.plot(xsnew, y, label='PG '+str(b), color=c, marker=m, linestyle='dashed', linewidth=0.5)
+    plt.plot(xsnew, y, label='PG GAE '+str(b), color=c, marker=m, linestyle='dashed', linewidth=0.5)
     plt.fill_between(xsnew, np.maximum(np.zeros_like(y), y-ystd), y+ystd, alpha=alpha, color=c)
 
     # xs = np.array(xs)
@@ -177,7 +178,7 @@ for e, c, m in zip(errs, colors, markers):
     print (np.mean(ysmin[idx[:k_best]]))
     ysnew = ysnew[idx[:k_best]]
 
-    y = np.mean(ysnew, axis=0)
+    y = np.median(ysnew, axis=0)
     ystd = np.std(ysnew, axis=0)
 
     # print (xsnew, ysnew)
@@ -208,5 +209,5 @@ plt.ylim((50.0, 200.0))
 plt.legend(prop={'size': 8})
 plt.tight_layout()
 
-plt.show()
-# plt.savefig(fname='cartpole.pdf', format='pdf')
+#plt.show()
+plt.savefig(fname='cartpole.pdf', format='pdf')

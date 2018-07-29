@@ -5,19 +5,19 @@ import time
 import ray
 import train
 
-BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/rebuttle/"
-# BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/"
+#BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/rebuttal/"
+BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/rebuttal/"
 # BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
 LQR_LOG_DIR = "cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/"
 
-ray.init(num_cpus=3)
+ray.init()
 
 @ray.remote
 def run_lqr_variant(args):
     train.train(args)
 
 gets = []
-seeds = list(range(0, 10))
+seeds = list(range(10, 60))
 
 log_dir = os.path.join(BASE_LOG_DIR, LQR_LOG_DIR)
 print ("BASE_LOG_DIR: ", log_dir)
