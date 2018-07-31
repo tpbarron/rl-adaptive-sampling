@@ -8,6 +8,8 @@ import envs.lqg_env as lqg
 import envs.lqr_env as lqr
 import envs.cartpole as cp
 import envs.linearized_cartpole as lcp
+import envs.dubins_car as dubins_car
+import envs.acrobot_continuous as acrobot_continuous
 
 from rl_adaptive_sampling.rl.policies.linear_policy import LinearPolicy
 from rl_adaptive_sampling.rl.baselines.zero_baseline import ZeroBaseline
@@ -48,7 +50,19 @@ def train(args):
     # env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
     # K = env.K
-    env = cp.CartPoleContinuousEnv()
+    # env = cp.CartPoleContinuousEnv()
+    # import gym
+    # env = gym.make('Swimmer-v2')
+    # env = dubins_car.DubinsCar()
+    # import gym
+    # import pybullet_envs
+    # import pybullet_envs.bullet.minitaur_gym_env as e
+    # env = e.MinitaurBulletEnv(render=True)
+    # env = gym.make('MinitaurBulletEnv-v0')
+    # import pybullet_envs.bullet.racecarGymEnv as e
+    # env = e.RacecarGymEnv(isDiscrete=False ,renders=True)
+    env = acrobot_continuous.AcrobotContinuousEnv()
+
     pi = LinearPolicy(env.observation_space.shape[0], env.action_space.shape[0])
     # pi.lin.weight.data = torch.from_numpy(-K+np.random.normal(scale=3, size=K.shape)).float()
     opt = optim.Adam(pi.parameters(), lr=args.lr)
