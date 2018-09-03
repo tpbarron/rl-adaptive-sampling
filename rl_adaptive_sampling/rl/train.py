@@ -54,24 +54,26 @@ def train(args):
     # import gym
     # env = gym.make('Swimmer-v2')
     # env = dubins_car.DubinsCar()
-    # import gym
-    # import pybullet_envs
+    import gym
+    import pybullet_envs
     # import pybullet_envs.bullet.minitaur_gym_env as e
-    # env = e.MinitaurBulletEnv(render=True)
+    # env = e.MinitaurBulletEnv(render=False)
     # env = gym.make('MinitaurBulletEnv-v0')
+    env = gym.make("Walker2DBulletEnv-v0")
     # import pybullet_envs.bullet.racecarGymEnv as e
-    # env = e.RacecarGymEnv(isDiscrete=False ,renders=True)
-    env = acrobot_continuous.AcrobotContinuousEnv()
+    # env = e.RacecarGymEnv(isDiscrete=False, renders=False)
+    # env = acrobot_continuous.AcrobotContinuousEnv()
+    # env = gym.make('LunarLanderContinuous-v2')
 
     pi = LinearPolicy(env.observation_space.shape[0], env.action_space.shape[0])
     # pi.lin.weight.data = torch.from_numpy(-K+np.random.normal(scale=3, size=K.shape)).float()
     opt = optim.Adam(pi.parameters(), lr=args.lr)
     # opt = optim.SGD(pi.parameters(), lr=args.lr, momentum=0.9)
 
-    baseline = LinearPolynomialKernelBaseline(env)
+    # baseline = LinearPolynomialKernelBaseline(env)
     # baseline = LinearBaselineKernelRegression(env)
     # baseline = LinearBaselineParameterized(env)
-    # baseline = ZeroBaseline(env)
+    baseline = ZeroBaseline(env)
 
     kf = KalmanFilter(pi.num_params(),
                       use_diagonal_approx=args.use_diagonal_approx,
@@ -122,9 +124,8 @@ def train(args):
         empirical_state_values = []
 
         if args.no_kalman:
-            opt.zero_grad()
-
             # The grad is only computed here to make comparisons.
+            opt.zero_grad()
             pg.compute_rollout_grad(args, [(rewards, glogps, states)], baseline, retain=True)
             grad_obs = pi.lin.weight.grad.view(-1).numpy().copy()
             batch_grads.append(grad_obs)

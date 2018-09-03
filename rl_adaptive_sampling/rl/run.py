@@ -5,10 +5,10 @@ import time
 import ray
 import train
 
-#BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/rebuttal/"
-BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/rebuttal/"
+# BASE_LOG_DIR = "/home/trevor/Documents/data/rl_adaptive_sampling/aaai/"
+BASE_LOG_DIR = "/home/dockeruser/DockerShare/tpbarron/data/rl_adaptive_sampling/aaai/"
 # BASE_LOG_DIR = "/media/trevor/22c63957-b0cc-45b6-9d8f-173d9619fb73/outputs/rl_adaptive_sampling/test/"
-LQR_LOG_DIR = "cartpole/7_29_18r0.1_lr0.01_polynomial_baseline_gae/"
+LQR_LOG_DIR = "walker2d/9_2_18err0.1_lr0.01_polynomial_baseline_gae/"
 
 ray.init()
 
@@ -23,10 +23,11 @@ log_dir = os.path.join(BASE_LOG_DIR, LQR_LOG_DIR)
 print ("BASE_LOG_DIR: ", log_dir)
 
 diagonal = [True] #, False]
-errs = [0.001, 0.01, 0.1, 0.2, 0.3]
+errs = [0.1, 0.2, 0.3]
 # batch_sizes = [100, 500, 1000, 5000]
 batch_sizes_traj = [1, 2, 5, 10]
-max_samples = 30000
+# max_samples = 30000
+max_samples = 1000000
 lr = 0.01
 # positions = [[0.5, 0.5, 0.0, 0.0], [0.5, 0.5, 0.1, -0.1], [0.5, 0.5, -0.25, 0.5]]
 # "--x0 0.5 --y0 0.5"
