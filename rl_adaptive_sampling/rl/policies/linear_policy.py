@@ -13,12 +13,12 @@ class LinearPolicy(nn.Module):
         print ("Linear policy: ", input_dim, action_dim)
         self.input_dim = input_dim
         self.action_dim = action_dim
-        self.lin = nn.Linear(input_dim, action_dim, bias=True)
-        # for param in list(self.lin.parameters()):  # only last layer
-            # param.data = 1e-2 * param.data
-        nn.init.kaiming_normal_(self.lin.weight.data)
+        self.lin = nn.Linear(input_dim, action_dim, bias=False)
+        for param in list(self.lin.parameters()):  # only last layer
+            param.data = 1e-2 * param.data
+        # nn.init.kaiming_normal_(self.lin.weight.data)
 
-        self.std = np.ones((action_dim,)) * 0.5
+        self.std = np.ones((action_dim,)) * 0.1
 
     def num_params(self):
         return self.input_dim * self.action_dim

@@ -45,21 +45,19 @@ def train(args):
 
     log = DataLog()
 
-    # TODO: make env
-
     # env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
     # K = env.K
-    # env = cp.CartPoleContinuousEnv()
+    env = cp.CartPoleContinuousEnv()
     # import gym
     # env = gym.make('Swimmer-v2')
     # env = dubins_car.DubinsCar()
-    import gym
-    import pybullet_envs
+    # import gym
+    # import pybullet_envs
     # import pybullet_envs.bullet.minitaur_gym_env as e
     # env = e.MinitaurBulletEnv(render=False)
     # env = gym.make('MinitaurBulletEnv-v0')
-    env = gym.make("Walker2DBulletEnv-v0")
+    # env = gym.make("Walker2DBulletEnv-v0")
     # import pybullet_envs.bullet.racecarGymEnv as e
     # env = e.RacecarGymEnv(isDiscrete=False, renders=False)
     # env = acrobot_continuous.AcrobotContinuousEnv()
@@ -70,17 +68,18 @@ def train(args):
     opt = optim.Adam(pi.parameters(), lr=args.lr)
     # opt = optim.SGD(pi.parameters(), lr=args.lr, momentum=0.9)
 
-    # baseline = LinearPolynomialKernelBaseline(env)
+    baseline = LinearPolynomialKernelBaseline(env)
     # baseline = LinearBaselineKernelRegression(env)
     # baseline = LinearBaselineParameterized(env)
-    baseline = ZeroBaseline(env)
+    # baseline = ZeroBaseline(env)
 
     kf = KalmanFilter(pi.num_params(),
                       use_diagonal_approx=args.use_diagonal_approx,
                       sos_init=args.sos_init,
                       reset_observation_noise=args.reset_obs_noise,
                       reset_state=args.reset_kf_state,
-                      window_size=20)
+                      window_size=20,
+                      use_last_error=False)
     kf.reset()
 
     print ("Random episodes")
@@ -174,8 +173,9 @@ def train(args):
             grad = pi.lin.weight.grad.view(-1, 1).numpy()
             log_grad_obs.append(grad)
             kf.update(grad)
-            if np.mean(kf.e) < args.kf_error_thresh:
-                print ("KF error: ", np.mean(kf.e), current_batch_trajs)
+            if kf.expected_improvement() < args.kf_error_thresh:
+            # if np.mean(kf.e) < args.kf_error_thresh:
+                print ("KF error: ", kf.expected_improvement(), np.mean(kf.e), current_batch_trajs)
                 pg.execute_kf_grad_step(pi, kf)
                 opt.step()
                 baseline.fit(empirical_state_values)

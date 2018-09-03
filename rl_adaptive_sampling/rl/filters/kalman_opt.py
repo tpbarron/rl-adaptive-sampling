@@ -99,6 +99,20 @@ class KalmanFilter(object):
             Y = np.dot(resid2, np.transpose(resid1)) # outer product
             self.Rt = ((self.n - 1) * self.Rt) / self.n + Y / self.n
 
+    def unit_vector(self, vector):
+        """ Returns the unit vector of the vector.  """
+        vector = np.squeeze(vector)
+        return vector / np.linalg.norm(vector)
+
+    def expected_improvement(self):
+        old_e = self.e
+        if self.use_diagonal_approx:
+            new_e = (self.ones - self.Kt) * self.e
+        else:
+            new_e = (self.I - self.Kt) @ self.e
+        # return np.arccos(np.clip(np.dot(self.unit_vector(old_e), self.unit_vector(new_e)), -1.0, 1.0))
+        return np.mean(old_e - new_e)
+
     def update(self, y):
         """
         Optimized update
@@ -235,6 +249,7 @@ class KalmanFilter(object):
             self.Pt = (self.I - Kt) @ self.Pt
             self.xt = self.xt + Kt @ Et
             self.e = (self.I - Kt) @ self.e
+            self.Kt = Kt
             # if self.n == 2:
             #     pdb.set_trace()
             # print (Kt)
