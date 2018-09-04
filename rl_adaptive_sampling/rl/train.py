@@ -48,11 +48,11 @@ def train(args):
     # env = lqg.LQG_Env(state0=np.array([args.x0, args.y0, args.xv0, args.yv0]))
     # env = lcp.LinearizedCartPole()
     # K = env.K
-    env = cp.CartPoleContinuousEnv()
+    # env = cp.CartPoleContinuousEnv()
     # import gym
     # env = gym.make('Swimmer-v2')
     # env = dubins_car.DubinsCar()
-    # import gym
+    import gym
     # import pybullet_envs
     # import pybullet_envs.bullet.minitaur_gym_env as e
     # env = e.MinitaurBulletEnv(render=False)
@@ -62,6 +62,7 @@ def train(args):
     # env = e.RacecarGymEnv(isDiscrete=False, renders=False)
     # env = acrobot_continuous.AcrobotContinuousEnv()
     # env = gym.make('LunarLanderContinuous-v2')
+    env = gym.make('BipedalWalker-v2')
 
     pi = LinearPolicy(env.observation_space.shape[0], env.action_space.shape[0])
     # pi.lin.weight.data = torch.from_numpy(-K+np.random.normal(scale=3, size=K.shape)).float()
